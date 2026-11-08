@@ -17,7 +17,7 @@ header img{height:46px}
 .btn:active{transform:scale(.97)}
 .pri{background:var(--slate);color:#fff}.pri:hover{background:#1b2428}
 .discord-btn{background:#5865F2;color:#fff}.discord-btn:hover{background:#4752C4}
-.sec{background:#fff;color:var(--slate);border:1.5px solid var(--slate)}.sec:hover{background:var(--soft)}
+.sec{background:#fff;color:var(--slate);border:1.5px solid var(--slate)}.sec:hover{background:#F3F3F4}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .card,.c{background:#fff;border-radius:22px;box-shadow:0 10px 36px #0002}
 :focus-visible{outline:3px solid var(--red);outline-offset:2px}
@@ -102,7 +102,7 @@ footer{text-align:center;margin-top:20px}
 
 <script>
 const CFG = {
-  CLIENT_ID: "1569106338749878284",
+  CLIENT_ID: "1569123432254148681", // ID mis à jour depuis votre capture d'écran
   AUTH_URL: "https://discord.com/oauth2/authorize",
   REDIR: "https://challengerobotik.github.io/Lignes-d-Azur/staff.html",
   ME_URL: "https://discord.com/api/users/@me",
@@ -112,7 +112,6 @@ const CFG = {
 const OWNER_ID = "800002654532534292";
 
 const $ = s => document.querySelector(s);
-const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s??"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const TABS = [["pending","En attente"],["accepted","Acceptées"],["refused","Refusées"]];
 
@@ -135,11 +134,31 @@ function login() {
 function logout() {
   localStorage.removeItem("staff_user");
   sessionStorage.removeItem("st_staff");
-  location.reload();
+  location.href = location.pathname;
+}
+
+async function callback() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  const q = new URLSearchParams(location.search);
+  const tok = h.get("access_token");
+  const err = q.get("error") || h.get("error");
+  if(!tok && !err) return false;
+  
+  const st = sessionStorage.getItem("st_staff");
+  history.replaceState({}, "", location.pathname);
+  if(err) throw new Error(err === "access_denied" ? "autorisation refusée" : err);
+  if(!st || h.get("state") !== st) throw new Error("état invalide");
+  
+  const r = await fetch(CFG.ME_URL, { headers: { Authorization: "Bearer " + tok } });
+  if(!r.ok) throw new Error("profil Discord inaccessible (HTTP " + r.status + ")");
+  const u = await r.json();
+  if(!u.id || !u.username) throw new Error("profil incomplet");
+  
+  localStorage.setItem("staff_user", JSON.stringify({ id: String(u.id), name: u.username }));
+  return true;
 }
 
 async function initApp() {
-  // 1. Initialisation de la BDD lors de la première visite
   try {
     const res = await fetch(`${CFG.DB}/siteadmin_visited.json`);
     const visited = await res.json();
@@ -153,36 +172,27 @@ async function initApp() {
     }
   } catch(e) {}
 
-  // 2. Traitement du retour OAuth2 Discord
-  const h = new URLSearchParams(location.hash.slice(1));
-  const q = new URLSearchParams(location.search);
-  const tok = h.get("access_token");
-  const err = q.get("error") || h.get("error");
-
-  if(tok) {
-    const st = sessionStorage.getItem("st_staff");
-    history.replaceState({}, "", location.pathname);
-    if(st && h.get("state") === st) {
-      try {
-        const r = await fetch(CFG.ME_URL, { headers: { Authorization: "Bearer " + tok } });
-        if(r.ok) {
-          const u = await r.json();
-          if(u.id) {
-            await verifyAccess(String(u.id), u.username);
-            return;
-          }
-        }
-      } catch(e) {}
+  try {
+    const loggedIn = await callback();
+    if(loggedIn) {
+      location.href = location.pathname;
+      return;
     }
+  } catch(e) {
+    console.error("Erreur OAuth2:", e);
+    $("#loginErr").textContent = "La connexion Discord a échoué (" + (e && e.message || e) + ").";
+    $("#loginErr").style.display = "block";
   }
 
-  // 3. Vérification de la session enregistrée
-  let storedUser = null;
-  try { storedUser = JSON.parse(localStorage.getItem("staff_user")); } catch(e){}
+  let user = null;
+  try { user = JSON.parse(localStorage.getItem("staff_user")); } catch(e) {}
 
-  if(storedUser && storedUser.id) {
-    await verifyAccess(storedUser.id, storedUser.name);
+  if(!user) {
+    $("#loginScreen").style.display = "block";
+    return;
   }
+
+  await verifyAccess(user.id, user.name);
 }
 
 async function verifyAccess(discordId, discordName) {
@@ -192,10 +202,11 @@ async function verifyAccess(discordId, discordName) {
 
     if(discordId === OWNER_ID || authorizedUsers[discordId]) {
       const pseudo = discordId === OWNER_ID ? "Owner Principal" : (authorizedUsers[discordId].discordPseudo || discordName);
-      localStorage.setItem("staff_user", JSON.stringify({ id: discordId, name: pseudo }));
       showApp(discordId, pseudo);
     } else {
+      $("#loginScreen").style.display = "block";
       $("#loginErr").style.display = "block";
+      localStorage.removeItem("staff_user");
     }
   } catch(e) {
     alert("Erreur de connexion à la base de données.");
