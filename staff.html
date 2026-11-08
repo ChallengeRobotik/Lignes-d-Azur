@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lignes d’Azur · Retours candidatures</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E8334A;--red2:#C8223A;--slate:#2F3B41;--ink:#1F2A30;--mute:#5F6B72;--soft:#F3F3F4}
+*{box-sizing:border-box;margin:0}
+html{background:#E6E6E8}
+body{font-family:"Figtree",system-ui,sans-serif;color:var(--ink);min-height:100vh}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3Cpattern id='p' width='44' height='44' patternUnits='userSpaceOnUse'%3E%3Cpath d='M4 4h16l-8 14zM26 26h16l-8 14z' fill='white' fill-opacity='.7'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='1600' height='900' fill='%23E6E6E8'/%3E%3Cpath d='M900 0h270l170 900H730z' fill='%23F3F3F4'/%3E%3Cpath d='M1170 0h430v900h-260z' fill='%23E8334A'/%3E%3Cpath d='M0 640h520l-50 260H0z' fill='%23E8334A'/%3E%3Crect width='1600' height='900' fill='url(%23p)'/%3E%3C/svg%3E") center/cover}
+header{width:100%;display:flex;justify-content:space-between;align-items:center;padding:8px 24px;background:#fff;box-shadow:0 2px 10px #0002;position:sticky;top:0;z-index:5}
+header img{height:46px}
+.btn{border:0;border-radius:16px;padding:14px 26px;font:700 16px inherit;font-family:inherit;cursor:pointer;transition:transform .15s,background .15s}
+.btn:active{transform:scale(.97)}
+.pri{background:var(--slate);color:#fff}.pri:hover{background:#1b2428}
+.sec{background:#fff;color:var(--slate);border:1.5px solid var(--slate)}.sec:hover{background:var(--soft)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.card,.c{background:#fff;border-radius:22px;box-shadow:0 10px 36px #0002}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+footer a{background:#fff;color:var(--slate);padding:8px 16px;border-radius:99px;text-decoration:none;font-weight:600;font-size:14px;box-shadow:0 2px 8px #0002}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.w{max-width:860px;margin:0 auto;padding:28px 16px 30px}
+h1{display:inline-block;background:#fff;border-radius:16px;padding:10px 22px;font-size:clamp(24px,5vw,34px);font-weight:800;margin-bottom:18px;box-shadow:0 6px 20px #0002}
+.tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.tabs button{border:1.5px solid var(--slate);border-radius:99px;padding:10px 18px;font:700 15px inherit;font-family:inherit;background:#fff;color:var(--slate);cursor:pointer}
+.tabs button.on{background:var(--slate);color:#fff}
+.c{padding:26px;margin-bottom:16px;animation:in .35s both}
+@keyframes in{from{opacity:0;transform:translateY(12px)}}
+.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+.top b{font-size:22px}.top small{color:var(--mute)}
+dl{display:grid;grid-template-columns:150px 1fr;gap:8px 16px;margin:16px 0}
+dt{color:var(--mute);font-weight:700}dd{line-height:1.5;white-space:pre-wrap;word-break:break-word}
+@media(max-width:560px){dl{grid-template-columns:1fr}}
+.act{display:flex;gap:10px;flex-wrap:wrap}
+.ok{background:#1E9C3F;color:#fff}.no{background:var(--red);color:#fff}
+.badge{padding:5px 14px;border-radius:99px;font-weight:700;font-size:13px}
+.b-accepted{background:#DFF7E3;color:#16692A}.b-refused{background:#FFE0E4;color:var(--red2)}
+.empty{background:#fff;border-radius:16px;color:var(--slate);text-align:center;padding:26px;font-weight:700}
+footer{text-align:center;margin-top:20px}
+</style>
+</head>
+<body>
+<header><img src="https://thumb.wikimedia.org/wikipedia/fr/thumb/9/9c/Lignes_dAzur_logo_2010.svg/3840px-Lignes_dAzur_logo_2010.svg.png" alt="Lignes d’Azur"></header>
+<div class="w">
+  <h1>Retours des candidatures</h1>
+  <div class="tabs" id="tabs"></div>
+  <div id="list"></div>
+  <footer><a href="confidentialite.html">Politique de confidentialité</a></footer>
+</div>
+<script>
+const DB="https://lignesd-azur-default-rtdb.europe-west1.firebasedatabase.app";
+const HOOK="https://discord.com/api/webhooks/1569042252028977294/mZ1OU6GyQE9PqKnNq2O3mkjhYghvcmsxDHjm6x388mAjmsfBUNkr-Vn64NIDps3ElhQ2";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const TABS=[["pending","En attente"],["accepted","Acceptées"],["refused","Refusées"]];
+let all=[],tab="pending";
+
+async function load(){
+  $("#list").innerHTML='<p class="empty">Chargement…</p>';
+  try{
+    const d=await(await fetch(DB+"/candidatures.json")).json()||{};
+    all=Object.entries(d).map(([id,v])=>({id,...v})).sort((a,b)=>b.date-a.date);
+    draw();
+  }catch{$("#list").innerHTML='<p class="empty">Impossible de charger les candidatures. Actualisez la page.</p>'}
+}
+function draw(){
+  $("#tabs").innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?"on":""}" data-t="${k}">${l} (${all.filter(c=>c.status===k).length})</button>`).join("");
+  document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
+  const l=all.filter(c=>c.status===tab);
+  $("#list").innerHTML=l.length?l.map(c=>`<article class="c">
+    <div class="top"><b>${esc(c.discordPseudo)}</b><small>${new Date(c.date).toLocaleString("fr-FR")}</small></div>
+    <dl><dt>ID Discord</dt><dd>${esc(c.discordId)}</dd><dt>Pseudo Roblox</dt><dd>${esc(c.robloxPseudo)}</dd>
+    <dt>Disponibilité</dt><dd>${esc(c.dispo)}/10</dd><dt>Débit</dt><dd>${esc(c.speed)} Mbit/s</dd>
+    <dt>Pourquoi lui</dt><dd>${esc(c.why)}</dd><dt>Motivation</dt><dd>${esc(c.motivation)}</dd></dl>
+    ${c.status==="pending"?`<div class="act"><button class="btn ok" data-d="accepted" data-id="${esc(c.id)}">Accepter</button><button class="btn no" data-d="refused" data-id="${esc(c.id)}">Refuser</button></div>`
+    :`<span class="badge b-${c.status}">${c.status==="accepted"?"Acceptée":"Refusée"} le ${new Date(c.decidedAt).toLocaleDateString("fr-FR")}</span>`}
+  </article>`).join(""):'<p class="empty">Aucune candidature ici.</p>';
+  document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>decide(b));
+}
+async function decide(btn){
+  const id=btn.dataset.id,res=btn.dataset.d,c=all.find(x=>x.id===id);
+  if(!confirm(`${res==="accepted"?"Accepter":"Refuser"} la candidature de ${c.discordPseudo} ?`))return;
+  btn.parentElement.querySelectorAll("button").forEach(b=>b.disabled=true);
+  try{
+    const r=await fetch(`${DB}/candidatures/${id}.json`,{method:"PATCH",body:JSON.stringify({status:res,decidedAt:Date.now()})});if(!r.ok)throw 0;
+    const ok=res==="accepted";
+    await fetch(HOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({embeds:[{title:"Résultat de candidature",color:ok?0x1E9C3F:0xD6341F,timestamp:new Date().toISOString(),fields:[
+      {name:"Pseudo",value:c.discordPseudo,inline:true},{name:"ID",value:String(c.discordId),inline:true},{name:"Résultat",value:ok?"✅ Accepté":"❌ Refusé"}]}]})}).catch(()=>{});
+    load();
+  }catch{alert("L’action a échoué. Réessayez.");btn.parentElement.querySelectorAll("button").forEach(b=>b.disabled=false)}
+}
+load();
+</script>
+</body>
+</html>

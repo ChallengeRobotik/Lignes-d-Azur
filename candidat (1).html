@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lignes d’Azur · Espace candidat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E8334A;--red2:#C8223A;--slate:#2F3B41;--ink:#1F2A30;--mute:#5F6B72;--soft:#F3F3F4}
+*{box-sizing:border-box;margin:0}
+html{background:#E6E6E8}
+body{font-family:"Figtree",system-ui,sans-serif;color:var(--ink);min-height:100vh}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3Cpattern id='p' width='44' height='44' patternUnits='userSpaceOnUse'%3E%3Cpath d='M4 4h16l-8 14zM26 26h16l-8 14z' fill='white' fill-opacity='.7'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='1600' height='900' fill='%23E6E6E8'/%3E%3Cpath d='M900 0h270l170 900H730z' fill='%23F3F3F4'/%3E%3Cpath d='M1170 0h430v900h-260z' fill='%23E8334A'/%3E%3Cpath d='M0 640h520l-50 260H0z' fill='%23E8334A'/%3E%3Crect width='1600' height='900' fill='url(%23p)'/%3E%3C/svg%3E") center/cover}
+header{width:100%;display:flex;justify-content:space-between;align-items:center;padding:8px 24px;background:#fff;box-shadow:0 2px 10px #0002;position:sticky;top:0;z-index:5}
+header img{height:46px}
+.btn{border:0;border-radius:16px;padding:14px 26px;font:700 16px inherit;font-family:inherit;cursor:pointer;transition:transform .15s,background .15s}
+.btn:active{transform:scale(.97)}
+.pri{background:var(--slate);color:#fff}.pri:hover{background:#1b2428}
+.sec{background:#fff;color:var(--slate);border:1.5px solid var(--slate)}.sec:hover{background:var(--soft)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.card,.c{background:#fff;border-radius:22px;box-shadow:0 10px 36px #0002}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+footer a{background:#fff;color:var(--slate);padding:8px 16px;border-radius:99px;text-decoration:none;font-weight:600;font-size:14px;box-shadow:0 2px 8px #0002}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+body{display:flex;flex-direction:column;align-items:center}
+.user{position:relative}
+.chip{display:flex;gap:8px;align-items:center;background:#fff;border:1.5px solid var(--slate);border-radius:99px;padding:9px 16px;font:700 15px inherit;font-family:inherit;color:var(--slate);cursor:pointer}
+.chip span{transition:transform .25s}.chip[aria-expanded=true] span{transform:rotate(180deg)}
+.menu{position:absolute;right:0;top:calc(100% + 8px);background:#fff;border-radius:16px;padding:6px;box-shadow:0 12px 30px #0003;min-width:190px}
+.menu button{width:100%;text-align:left;border:0;background:none;padding:12px 14px;border-radius:10px;font:700 15px inherit;font-family:inherit;color:var(--red2);cursor:pointer}
+.menu button:hover{background:var(--soft)}
+main{width:100%;max-width:760px;flex:1;padding:36px 16px}
+.card{padding:36px;overflow:hidden}
+h1{font-size:clamp(28px,5vw,38px);font-weight:800;line-height:1.1;margin-bottom:12px}
+h2{font-size:clamp(24px,4.5vw,32px);font-weight:800;line-height:1.15;margin-bottom:10px}
+p.h{color:var(--mute);margin-bottom:22px;line-height:1.5}
+.row{display:flex;gap:12px;justify-content:space-between;margin-top:26px}
+input,textarea{width:100%;border:1.5px solid var(--slate);border-radius:99px;padding:15px 22px;font:500 17px inherit;font-family:inherit;color:var(--ink);outline:0;background:#fff}
+textarea{min-height:140px;resize:vertical;border-radius:22px}
+input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #E8334A33}
+.err{color:var(--red2);font-weight:700;margin-top:10px;min-height:20px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+@media(max-width:600px){.tiles{grid-template-columns:1fr}.card{padding:24px}header{padding:8px 14px}}
+.tile{position:relative;text-align:left;border:1.5px solid var(--slate);background:#fff;border-radius:22px;padding:24px;min-height:170px;cursor:pointer;font-family:inherit;color:var(--ink);transition:border-color .2s,transform .2s,box-shadow .2s}
+.tile:hover{border-color:var(--red);transform:translateY(-3px);box-shadow:0 10px 24px #E8334A22}
+.tile b{display:block;font-size:22px;margin-bottom:8px}.tile small{color:var(--mute);line-height:1.4;display:block}
+.badge{display:inline-block;margin-top:14px;padding:5px 14px;border-radius:99px;border:1.5px solid var(--slate);color:var(--slate);font-weight:700;font-size:13px}
+.badge.ok{background:#DFF7E3;border-color:#16692A;color:#16692A}.badge.no{background:#FFE0E4;border-color:var(--red2);color:var(--red2)}
+.tile.locked{background:#EDEDEF;border-color:#B4BBC0;cursor:not-allowed}.tile.locked:hover{transform:none;box-shadow:none;border-color:#B4BBC0}
+.lock{font-size:64px;line-height:1;display:block;margin-bottom:10px;animation:wob 3s ease-in-out infinite}
+@keyframes wob{0%,90%,100%{transform:rotate(0)}93%{transform:rotate(-10deg)}96%{transform:rotate(10deg)}}
+.line{position:relative;height:6px;background:#E1E3E5;border-radius:9px;margin:4px 6px 32px}
+.line i{position:absolute;left:0;top:0;height:100%;border-radius:9px;background:var(--red);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.line u{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;border:3px solid #C9CDD0;transition:border-color .4s}
+.line u.on{border-color:var(--red)}
+.scale{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+.scale button{aspect-ratio:1;border:1.5px solid var(--slate);background:#fff;border-radius:50%;font:700 17px inherit;font-family:inherit;cursor:pointer;color:var(--slate)}
+.scale button.on{background:var(--red);border-color:var(--red);color:#fff}
+.speed{font-size:56px;font-weight:800;color:var(--red);margin:6px 0}
+#stage.outL{animation:oL .22s forwards}#stage.outR{animation:oR .22s forwards}
+#stage.inR{animation:iR .42s cubic-bezier(.2,.8,.2,1)}#stage.inL{animation:iL .42s cubic-bezier(.2,.8,.2,1)}
+@keyframes oL{to{opacity:0;transform:translateX(-70px)}}@keyframes oR{to{opacity:0;transform:translateX(70px)}}
+@keyframes iR{from{opacity:0;transform:translateX(70px)}}@keyframes iL{from{opacity:0;transform:translateX(-70px)}}
+footer{padding:0 0 24px}
+</style>
+</head>
+<body>
+<header>
+  <img src="https://thumb.wikimedia.org/wikipedia/fr/thumb/9/9c/Lignes_dAzur_logo_2010.svg/3840px-Lignes_dAzur_logo_2010.svg.png" alt="Lignes d’Azur">
+  <div class="user" id="user" hidden>
+    <button class="chip" id="chip" aria-expanded="false" aria-haspopup="true"><b id="uname"></b><span>▾</span></button>
+    <div class="menu" id="menu" hidden><button id="logout">Se déconnecter</button></div>
+  </div>
+</header>
+
+<main>
+  <div class="card" id="login" hidden>
+    <h1>Devenez conducteur de tramway</h1>
+    <p class="h">Connectez-vous avec votre compte Roblox pour déposer votre candidature et suivre votre évolution.</p>
+    <button class="btn pri" id="loginBtn">Se connecter avec Roblox</button>
+    <p class="err" id="loginErr"></p>
+  </div>
+
+  <div class="card" id="home" hidden>
+    <h1>Bonjour <span id="hname"></span></h1>
+    <p class="h">Que souhaitez-vous faire ?</p>
+    <div class="tiles">
+      <button class="tile" id="tCand"><b>Candidature</b><small>Répondez aux questions pour postuler comme conducteur.</small><span class="badge" id="cBadge"></span></button>
+      <button class="tile" id="tEvo"><span class="lock" id="lockIc" hidden>🔒</span><b>Évolution</b><small id="evoTxt"></small></button>
+    </div>
+  </div>
+
+  <div class="card" id="form" hidden>
+    <div class="line" id="prog"></div>
+    <div id="stage"></div>
+  </div>
+
+  <div class="card" id="evo" hidden>
+    <h2>Demande d’évolution</h2>
+    <p class="h">Expliquez l’évolution que vous souhaitez sur le tramway.</p>
+    <p style="font-weight:600;margin-bottom:8px">Évolution souhaitée</p>
+    <textarea id="e1"></textarea>
+    <p style="font-weight:600;margin:16px 0 8px">Pourquoi maintenant ?</p>
+    <textarea id="e2"></textarea>
+    <p class="err" id="eErr"></p>
+    <div class="row"><button class="btn sec" data-home>Retour</button><button class="btn pri" id="eSend">Envoyer ma demande</button></div>
+  </div>
+
+  <div class="card" id="msg" hidden>
+    <h2 id="mT"></h2><p class="h" id="mP"></p>
+    <button class="btn pri" data-home>Retour à l’accueil</button>
+  </div>
+</main>
+<footer><a href="confidentialite.html">Politique de confidentialité</a></footer>
+
+<script>
+const CFG={
+  CLIENT_ID:"VOTRE_CLIENT_ID_ROBLOX",   // créé sur create.roblox.com > OAuth 2.0 Apps
+  TOKEN_PROXY:"",                        // URL de votre proxy d’échange de jeton (voir notes)
+  DB:"https://lignesd-azur-default-rtdb.europe-west1.firebasedatabase.app",
+  HOOK:"https://discord.com/api/webhooks/1569042252028977294/mZ1OU6GyQE9PqKnNq2O3mkjhYghvcmsxDHjm6x388mAjmsfBUNkr-Vn64NIDps3ElhQ2"
+};
+const REDIR=location.origin+location.pathname, DAY=864e5;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const screens=["login","home","form","evo","msg"];
+const show=id=>screens.forEach(s=>$("#"+s).hidden=s!==id);
+let user=null,cand=null,i=0,A={};
+
+/* ---------- Connexion Roblox (OAuth 2.0 + PKCE) ---------- */
+const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+async function login(){
+  const v=b64(crypto.getRandomValues(new Uint8Array(32))),st=b64(crypto.getRandomValues(new Uint8Array(16)));
+  const ch=b64(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v)));
+  sessionStorage.setItem("pk",v+"|"+st);
+  location.href="https://apis.roblox.com/oauth/v1/authorize?"+new URLSearchParams({client_id:CFG.CLIENT_ID,redirect_uri:REDIR,scope:"openid profile",response_type:"code",code_challenge:ch,code_challenge_method:"S256",state:st});
+}
+async function callback(){
+  const p=new URLSearchParams(location.search);if(!p.get("code"))return;
+  const [v,st]=(sessionStorage.getItem("pk")||"|").split("|");history.replaceState({},"",REDIR);
+  if(p.get("state")!==st)throw new Error("état invalide");
+  const r=await fetch(CFG.TOKEN_PROXY||"https://apis.roblox.com/oauth/v1/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({grant_type:"authorization_code",code:p.get("code"),client_id:CFG.CLIENT_ID,redirect_uri:REDIR,code_verifier:v})});
+  const t=await r.json();if(!t.access_token)throw new Error("jeton refusé");
+  const u=await(await fetch("https://apis.roblox.com/oauth/v1/userinfo",{headers:{Authorization:"Bearer "+t.access_token}})).json();
+  localStorage.setItem("user",JSON.stringify({id:String(u.sub),name:u.preferred_username||u.name}));
+}
+function logout(){localStorage.removeItem("user");location.reload()}
+
+/* ---------- Données ---------- */
+const getCand=async()=>(await(await fetch(`${CFG.DB}/candidatures/${user.id}.json`)).json());
+const hook=embed=>fetch(CFG.HOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({embeds:[{color:0xFF6A00,timestamp:new Date().toISOString(),...embed}]})}).catch(()=>{});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cut=s=>String(s).slice(0,1000);
+
+/* ---------- Accueil ---------- */
+function evoState(){
+  if(!cand||cand.status!=="accepted")return{ok:false,t:"Disponible une fois votre candidature acceptée."};
+  const left=Math.ceil((cand.decidedAt+14*DAY-Date.now())/DAY);
+  return left>0?{ok:false,t:`Débloqué après 2 semaines de formation : encore ${left} jour${left>1?"s":""}.`}:{ok:true,t:"Demandez une évolution sur le tramway."};
+}
+async function home(){
+  show("home");$("#hname").textContent=user.name;
+  try{cand=await getCand()}catch{cand=null}
+  const b=$("#cBadge"),m={pending:["En attente",""],accepted:["Acceptée","ok"],refused:["Refusée","no"]}[cand&&cand.status]||["Non envoyée",""];
+  b.textContent=m[0];b.className="badge "+m[1];
+  const e=evoState();$("#evoTxt").textContent=e.t;$("#lockIc").hidden=e.ok;$("#tEvo").classList.toggle("locked",!e.ok);
+}
+
+/* ---------- Questions ---------- */
+const Q=[
+ {k:"discordPseudo",t:"Quel est votre pseudo Discord ?",ph:"Votre pseudo"},
+ {k:"discordId",t:"Quel est votre ID Discord ?",h:"Identifiant numérique. Activez le mode développeur dans Discord (Paramètres > Avancés), puis faites un clic droit sur votre profil > Copier l’identifiant.",ph:"Exemple : 123456789012345678",re:/^\d{17,20}$/,err:"L’ID Discord est composé de 17 à 20 chiffres."},
+ {k:"robloxPseudo",t:"Quel est votre pseudo Roblox ?",ph:"Votre pseudo Roblox"},
+ {k:"why",t:"Pourquoi vous et pas un autre ?",type:"area"},
+ {k:"dispo",t:"Quelle est votre disponibilité sur 10 ?",h:"1 : très peu disponible. 10 : disponible presque tous les jours.",type:"scale"},
+ {k:"motivation",t:"Quelle est votre motivation ?",type:"area"},
+ {k:"speed",t:"Test de connexion",h:"Mesure votre vitesse de téléchargement pour vérifier que votre connexion tient la route. Nous ne collectons pas votre adresse IP.",type:"speed"}
+];
+function draw(){
+  const q=Q[i],last=i===Q.length-1,v=A[q.k]??(q.k==="robloxPseudo"?user.name:"");
+  let f="";
+  if(q.type==="area")f=`<textarea id="f" maxlength="1000">${esc(v)}</textarea>`;
+  else if(q.type==="scale")f=`<div class="scale">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button type="button" class="${v===n?"on":""}" data-n="${n}">${n}</button>`).join("")}</div>`;
+  else if(q.type==="speed")f=`<div class="speed" id="spd">${v?v+" Mbit/s":"–"}</div><button type="button" class="btn sec" id="run">${v?"Relancer le test":"Lancer le test"}</button>`;
+  else f=`<input id="f" value="${esc(v)}" placeholder="${q.ph||""}" maxlength="64" autocomplete="off">`;
+  $("#stage").innerHTML=`<h2>${q.t}</h2>${q.h?`<p class="h">${q.h}</p>`:""}${f}<p class="err" id="err"></p>
+  <div class="row"><button class="btn sec" id="back">Retour</button><button class="btn pri" id="next">${last?"Envoyer ma candidature":"Continuer"}</button></div>`;
+  $("#back").onclick=()=>go(-1);$("#next").onclick=()=>go(1);
+  $$(".scale button").forEach(b=>b.onclick=()=>{A.dispo=+b.dataset.n;$$(".scale button").forEach(x=>x.classList.toggle("on",x===b))});
+  if($("#run"))$("#run").onclick=speed;
+  const f1=$("#f");if(f1&&q.type!=="area"){f1.onkeydown=e=>e.key==="Enter"&&go(1)}if(f1)f1.focus();
+  const n=Q.length;$("#prog").innerHTML=`<i style="width:${i/(n-1)*100}%"></i>`+Q.map((_,j)=>`<u class="${j<=i?"on":""}" style="left:${j/(n-1)*100}%"></u>`).join("");
+}
+function save(){
+  const q=Q[i],set=m=>($("#err").textContent=m,false);
+  if(q.type==="scale")return A.dispo?true:set("Choisissez une note.");
+  if(q.type==="speed")return A.speed?true:set("Lancez le test pour continuer.");
+  const v=$("#f").value.trim();
+  if(!v)return set("Ce champ est obligatoire.");
+  if(q.re&&!q.re.test(v))return set(q.err);
+  A[q.k]=v;return true;
+}
+function go(d){
+  if(d>0&&!save())return;
+  const n=i+d;if(n<0)return home();if(n>=Q.length)return send();
+  if(d<0&&Q[i].type==="area"){A[Q[i].k]=$("#f").value}
+  const s=$("#stage");s.className=d>0?"outL":"outR";
+  setTimeout(()=>{i=n;draw();s.className=d>0?"inR":"inL"},220);
+}
+async function speed(){
+  const btn=$("#run"),out=$("#spd");btn.disabled=true;out.textContent="Mesure en cours…";$("#err").textContent="";
+  try{
+    const t0=performance.now(),r=await fetch("https://speed.cloudflare.com/__down?bytes=8000000",{cache:"no-store"});
+    const rd=r.body.getReader();let n=0;for(;;){const{done,value}=await rd.read();if(done)break;n+=value.length}
+    A.speed=+(n*8/((performance.now()-t0)/1000)/1e6).toFixed(1);out.textContent=A.speed+" Mbit/s";btn.textContent="Relancer le test";
+  }catch{out.textContent="–";$("#err").textContent="Le test a échoué. Vérifiez votre connexion et réessayez."}
+  btn.disabled=false;
+}
+async function send(){
+  const b=$("#next");b.disabled=true;b.textContent="Envoi…";
+  const d={...A,robloxId:user.id,date:Date.now(),status:"pending"};
+  try{
+    const r=await fetch(`${CFG.DB}/candidatures/${user.id}.json`,{method:"PUT",body:JSON.stringify(d)});if(!r.ok)throw 0;
+    hook({title:"Nouvelle candidature · Conducteur de tramway",fields:[["Pseudo Discord",d.discordPseudo],["ID Discord",d.discordId],["Pseudo Roblox",d.robloxPseudo],["Disponibilité",d.dispo+"/10"],["Pourquoi lui",cut(d.why)],["Motivation",cut(d.motivation)],["Débit",d.speed+" Mbit/s"]].map(([name,value])=>({name,value:String(value),inline:name.length<14})) });
+    show("msg");$("#mT").textContent="Candidature envoyée";$("#mP").textContent="Le staff reviendra vers vous. Vous pouvez suivre le statut depuis l’accueil.";
+  }catch{b.disabled=false;b.textContent="Envoyer ma candidature";$("#err").textContent="L’envoi a échoué. Réessayez dans un instant."}
+}
+function openForm(){
+  if(cand){show("msg");const s=cand.status;$("#mT").textContent=s==="accepted"?"Candidature acceptée":s==="refused"?"Candidature refusée":"Candidature en attente";
+    $("#mP").textContent=s==="pending"?"Vous avez déjà candidaté. Le staff n’a pas encore rendu sa réponse.":s==="accepted"?"Bienvenue en formation ! L’évolution se débloque après 2 semaines.":"Votre candidature n’a pas été retenue cette fois.";return}
+  A={};i=0;show("form");draw();
+}
+
+/* ---------- Évolution ---------- */
+function openEvo(){const e=evoState();if(!e.ok){alert(e.t);return}$("#e1").value=$("#e2").value="";$("#eErr").textContent="";show("evo")}
+async function sendEvo(){
+  const a=$("#e1").value.trim(),b=$("#e2").value.trim();if(!a||!b)return $("#eErr").textContent="Remplissez les deux champs.";
+  const btn=$("#eSend");btn.disabled=true;
+  try{
+    const r=await fetch(`${CFG.DB}/evolutions/${user.id}.json`,{method:"POST",body:JSON.stringify({robloxPseudo:user.name,robloxId:user.id,evolution:a,why:b,date:Date.now()})});if(!r.ok)throw 0;
+    hook({title:"Demande d’évolution · Tramway",fields:[{name:"Pseudo Roblox",value:user.name,inline:true},{name:"Évolution",value:cut(a)},{name:"Raison",value:cut(b)}]});
+    show("msg");$("#mT").textContent="Demande envoyée";$("#mP").textContent="Le staff étudiera votre demande.";
+  }catch{$("#eErr").textContent="L’envoi a échoué. Réessayez."}
+  btn.disabled=false;
+}
+
+/* ---------- Démarrage ---------- */
+$("#loginBtn").onclick=login;$("#logout").onclick=logout;$("#tCand").onclick=openForm;$("#tEvo").onclick=openEvo;$("#eSend").onclick=sendEvo;
+$$("[data-home]").forEach(b=>b.onclick=home);
+$("#chip").onclick=()=>{const m=$("#menu");m.hidden=!m.hidden;$("#chip").setAttribute("aria-expanded",!m.hidden)};
+document.addEventListener("click",e=>{if(!e.target.closest("#user")){$("#menu").hidden=true;$("#chip").setAttribute("aria-expanded","false")}});
+(async()=>{
+  try{await callback()}catch(e){show("login");$("#loginErr").textContent="La connexion Roblox a échoué. Réessayez."}
+  try{user=JSON.parse(localStorage.getItem("user"))}catch{}
+  if(!user){if($("#login").hidden&&!$("#loginErr").textContent)show("login");return}
+  $("#user").hidden=false;$("#uname").textContent=user.name;home();
+})();
+</script>
+</body>
+</html>
