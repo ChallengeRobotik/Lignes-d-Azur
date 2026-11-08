@@ -41,24 +41,187 @@ dt{color:var(--mute);font-weight:700}dd{line-height:1.5;white-space:pre-wrap;wor
 .b-accepted{background:#DFF7E3;color:#16692A}.b-refused{background:#FFE0E4;color:var(--red2)}
 .empty{background:#fff;border-radius:16px;color:var(--slate);text-align:center;padding:26px;font-weight:700}
 footer{text-align:center;margin-top:20px}
+
+/* Écran de connexion & gestion mdp */
+.login-box{max-width:420px;margin:60px auto;padding:32px;background:#fff;border-radius:24px;box-shadow:0 12px 40px #0002;text-align:center}
+.login-box h2{margin-bottom:16px;font-size:24px}
+.form-group{margin-bottom:14px;text-align:left}
+.form-group label{display:block;font-weight:700;margin-bottom:6px;font-size:14px;color:var(--mute)}
+.input-text{width:100%;padding:12px 16px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;font-size:15px;outline:none}
+.input-text:focus{border-color:var(--slate)}
+.err-msg{color:var(--red);font-size:14px;font-weight:700;margin-top:10px;display:none}
+.header-user{display:flex;align-items:center;gap:12px}
+.pass-manager{background:#fff;padding:20px;border-radius:18px;margin-bottom:20px;box-shadow:0 6px 20px #0001}
+.pass-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+@media(max-width:650px){.pass-grid{grid-template-columns:1fr}}
+.pass-list{margin-top:14px;border-top:1.5px solid var(--soft);padding-top:10px}
+.pass-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--soft);font-size:14px}
 </style>
 </head>
 <body>
-<header><img src="https://thumb.wikimedia.org/wikipedia/fr/thumb/9/9c/Lignes_dAzur_logo_2010.svg/3840px-Lignes_dAzur_logo_2010.svg.png" alt="Lignes d’Azur"></header>
-<div class="w">
+<header>
+  <img src="https://thumb.wikimedia.org/wikipedia/fr/thumb/9/9c/Lignes_dAzur_logo_2010.svg/3840px-Lignes_dAzur_logo_2010.svg.png" alt="Lignes d’Azur">
+  <div id="userInfo" class="header-user" style="display:none;">
+    <span id="loggedName" style="font-weight:700;"></span>
+    <button class="btn sec" style="padding:8px 16px;font-size:14px;" onclick="logout()">Déconnexion</button>
+  </div>
+</header>
+
+<!-- Écran de connexion -->
+<div id="loginScreen" class="w">
+  <div class="login-box">
+    <h2>Espace Révision</h2>
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="passInput">Mot de passe</label>
+        <input type="password" id="passInput" class="input-text" placeholder="Saisissez votre mot de passe" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn pri" style="width:100%;">Se connecter</button>
+      <div id="loginErr" class="err-msg">Mot de passe incorrect</div>
+    </form>
+  </div>
+</div>
+
+<!-- Espace principal -->
+<div id="mainScreen" class="w" style="display:none;">
   <h1>Retours des candidatures</h1>
+
+  <!-- Zone de gestion des mots de passe -->
+  <div class="pass-manager">
+    <h3 style="margin-bottom:12px;">Créer un accès membre</h3>
+    <form onsubmit="createPassword(event)" class="pass-grid">
+      <div class="form-group" style="margin:0;">
+        <label>ID Discord</label>
+        <input type="text" id="newDiscordId" class="input-text" placeholder="ex: 123456789" required>
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label>Pseudo Discord actuel</label>
+        <input type="text" id="newDiscordPseudo" class="input-text" placeholder="ex: User#0000" required>
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label>Mot de passe</label>
+        <input type="text" id="newPassword" class="input-text" placeholder="Définir un mdp" required>
+      </div>
+      <button type="submit" class="btn pri" style="padding:12px 20px;">Générer</button>
+    </form>
+    <div class="pass-list" id="passList"></div>
+  </div>
+
   <div class="tabs" id="tabs"></div>
   <div id="list"></div>
   <footer><a href="confidentialite.html">Politique de confidentialité</a></footer>
 </div>
+
 <script>
 const DB="https://lignesd-azur-default-rtdb.europe-west1.firebasedatabase.app";
 const HOOK="https://discord.com/api/webhooks/1569042252028977294/mZ1OU6GyQE9PqKnNq2O3mkjhYghvcmsxDHjm6x388mAjmsfBUNkr-Vn64NIDps3ElhQ2";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const TABS=[["pending","En attente"],["accepted","Acceptées"],["refused","Refusées"]];
-let all=[],tab="pending";
+let all=[],tab="pending",passwordsList={};
 
+// --- AUTHENTIFICATION ---
+async function handleLogin(e){
+  e.preventDefault();
+  $("#loginErr").style.display="none";
+  const pwd=$("#passInput").value.trim();
+  
+  try {
+    const res = await fetch(`${DB}/passwords.json`);
+    let data = await res.json();
+    
+    // Si aucun mot de passe n'existe encore en BDD, on crée un accès admin initial
+    if(!data) {
+      const initPass = { "admin_default": { discordId: "0", discordPseudo: "Admin Initial", pass: "admin123" } };
+      await fetch(`${DB}/passwords.json`, {method:"SET", body:JSON.stringify(initPass)});
+      data = initPass;
+    }
+    
+    const userKey = Object.keys(data).find(k => data[k].pass === pwd);
+    if(userKey){
+      sessionStorage.setItem("staff_logged","1");
+      sessionStorage.setItem("staff_user", data[userKey].discordPseudo);
+      showApp();
+    } else {
+      $("#loginErr").style.display="block";
+    }
+  } catch(err) {
+    alert("Erreur de connexion avec le serveur.");
+  }
+}
+
+function logout(){
+  sessionStorage.removeItem("staff_logged");
+  sessionStorage.removeItem("staff_user");
+  $("#loginScreen").style.display="block";
+  $("#mainScreen").style.display="none";
+  $("#userInfo").style.display="none";
+  $("#passInput").value="";
+}
+
+function showApp(){
+  $("#loginScreen").style.display="none";
+  $("#mainScreen").style.display="block";
+  $("#userInfo").style.display="flex";
+  $("#loggedName").textContent = sessionStorage.getItem("staff_user") || "Staff";
+  loadPasswords();
+  load();
+}
+
+// --- GESTION DES MOTS DE PASSE ---
+async function loadPasswords(){
+  try{
+    passwordsList = await(await fetch(`${DB}/passwords.json`)).json() || {};
+    drawPasswords();
+  }catch{}
+}
+
+function drawPasswords(){
+  const entries = Object.entries(passwordsList);
+  if(!entries.length){
+    $("#passList").innerHTML = '<p style="color:var(--mute);font-size:13px;margin-top:8px;">Aucun mot de passe enregistré.</p>';
+    return;
+  }
+  $("#passList").innerHTML = '<b>Accès enregistrés :</b>' + entries.map(([key, item]) => `
+    <div class="pass-item">
+      <span><b>${esc(item.discordPseudo)}</b> (ID: ${esc(item.discordId)}) — Mot de passe: <code>${esc(item.pass)}</code></span>
+      <button class="btn no" style="padding:4px 10px;font-size:12px;border-radius:8px;" onclick="deletePassword('${key}')">Supprimer</button>
+    </div>
+  `).join("");
+}
+
+async function createPassword(e){
+  e.preventDefault();
+  const discordId = $("#newDiscordId").value.trim();
+  const discordPseudo = $("#newDiscordPseudo").value.trim();
+  const pass = $("#newPassword").value.trim();
+
+  try {
+    await fetch(`${DB}/passwords.json`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ discordId, discordPseudo, pass, createdAt: Date.now() })
+    });
+    $("#newDiscordId").value = "";
+    $("#newDiscordPseudo").value = "";
+    $("#newPassword").value = "";
+    loadPasswords();
+  } catch {
+    alert("Échec lors de la création du mot de passe.");
+  }
+}
+
+async function deletePassword(key){
+  if(!confirm("Supprimer cet accès ?")) return;
+  try {
+    await fetch(`${DB}/passwords/${key}.json`, { method: "DELETE" });
+    loadPasswords();
+  } catch {
+    alert("Impossible de supprimer cet accès.");
+  }
+}
+
+// --- CHARGEMENT CANDIDATURES ---
 async function load(){
   $("#list").innerHTML='<p class="empty">Chargement…</p>';
   try{
@@ -67,6 +230,7 @@ async function load(){
     draw();
   }catch{$("#list").innerHTML='<p class="empty">Impossible de charger les candidatures. Actualisez la page.</p>'}
 }
+
 function draw(){
   $("#tabs").innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?"on":""}" data-t="${k}">${l} (${all.filter(c=>c.status===k).length})</button>`).join("");
   document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
@@ -81,6 +245,7 @@ function draw(){
   </article>`).join(""):'<p class="empty">Aucune candidature ici.</p>';
   document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>decide(b));
 }
+
 async function decide(btn){
   const id=btn.dataset.id,res=btn.dataset.d,c=all.find(x=>x.id===id);
   if(!confirm(`${res==="accepted"?"Accepter":"Refuser"} la candidature de ${c.discordPseudo} ?`))return;
@@ -93,7 +258,11 @@ async function decide(btn){
     load();
   }catch{alert("L’action a échoué. Réessayez.");btn.parentElement.querySelectorAll("button").forEach(b=>b.disabled=false)}
 }
-load();
+
+// Maintien de la session active au rafraîchissement
+if(sessionStorage.getItem("staff_logged")==="1"){
+  showApp();
+}
 </script>
 </body>
 </html>
