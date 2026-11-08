@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lignes d’Azur · Retours candidatures</title>
+<title>Lignes d’Azur · Gestion du Staff</title>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--red:#E8334A;--red2:#C8223A;--slate:#2F3B41;--ink:#1F2A30;--mute:#5F6B72;--soft:#F3F3F4}
@@ -13,7 +13,7 @@ body{font-family:"Figtree",system-ui,sans-serif;color:var(--ink);min-height:100v
 body::before{content:"";position:fixed;inset:0;z-index:-1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3Cpattern id='p' width='44' height='44' patternUnits='userSpaceOnUse'%3E%3Cpath d='M4 4h16l-8 14zM26 26h16l-8 14z' fill='white' fill-opacity='.7'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='1600' height='900' fill='%23E6E6E8'/%3E%3Cpath d='M900 0h270l170 900H730z' fill='%23F3F3F4'/%3E%3Cpath d='M1170 0h430v900h-260z' fill='%23E8334A'/%3E%3Cpath d='M0 640h520l-50 260H0z' fill='%23E8334A'/%3E%3Crect width='1600' height='900' fill='url(%23p)'/%3E%3C/svg%3E") center/cover}
 header{width:100%;display:flex;justify-content:space-between;align-items:center;padding:8px 24px;background:#fff;box-shadow:0 2px 10px #0002;position:sticky;top:0;z-index:5}
 header img{height:46px}
-.btn{border:0;border-radius:16px;padding:14px 26px;font:700 16px inherit;font-family:inherit;cursor:pointer;transition:transform .15s,background .15s;text-decoration:none;display:inline-block;text-align:center}
+.btn{border:0;border-radius:16px;padding:12px 22px;font:700 15px inherit;font-family:inherit;cursor:pointer;transition:transform .15s,background .15s;text-decoration:none;display:inline-block;text-align:center}
 .btn:active{transform:scale(.97)}
 .pri{background:var(--slate);color:#fff}.pri:hover{background:#1b2428}
 .discord-btn{background:#5865F2;color:#fff}.discord-btn:hover{background:#4752C4}
@@ -45,13 +45,13 @@ footer{text-align:center;margin-top:20px}
 
 /* Écran de connexion & gestion */
 .login-box{max-width:420px;margin:60px auto;padding:32px;background:#fff;border-radius:24px;box-shadow:0 12px 40px #0002;text-align:center}
-.login-box h2{margin-bottom:16px;font-size:24px}
+.login-box h2{margin-bottom:12px;font-size:24px}
 .err-msg{color:var(--red);font-size:14px;font-weight:700;margin-top:14px;display:none}
 .header-user{display:flex;align-items:center;gap:12px}
-.pass-manager{background:#fff;padding:20px;border-radius:18px;margin-bottom:20px;box-shadow:0 6px 20px #0001}
+.pass-manager{background:#fff;padding:22px;border-radius:18px;margin-bottom:20px;box-shadow:0 6px 20px #0001}
 .pass-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
 @media(max-width:650px){.pass-grid{grid-template-columns:1fr}}
-.pass-list{margin-top:14px;border-top:1.5px solid var(--soft);padding-top:10px}
+.pass-list{margin-top:14px;border-top:1.5px solid var(--soft);padding-top:12px}
 .pass-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--soft);font-size:14px}
 </style>
 </head>
@@ -60,7 +60,7 @@ footer{text-align:center;margin-top:20px}
   <img src="https://thumb.wikimedia.org/wikipedia/fr/thumb/9/9c/Lignes_dAzur_logo_2010.svg/3840px-Lignes_dAzur_logo_2010.svg.png" alt="Lignes d’Azur">
   <div id="userInfo" class="header-user" style="display:none;">
     <span id="loggedName" style="font-weight:700;"></span>
-    <button class="btn sec" style="padding:8px 16px;font-size:14px;" onclick="logout()">Déconnexion</button>
+    <button class="btn sec" style="padding:6px 14px;font-size:13px;" onclick="logout()">Se déconnecter</button>
   </div>
 </header>
 
@@ -68,29 +68,29 @@ footer{text-align:center;margin-top:20px}
 <div id="loginScreen" class="w">
   <div class="login-box">
     <h2>Espace Staff</h2>
-    <p style="color:var(--mute);font-size:14px;margin-bottom:24px;">Connectez-vous avec votre compte Discord pour accéder à la gestion des candidatures.</p>
+    <p style="color:var(--mute);font-size:14px;margin-bottom:24px;">Identifie-toi avec ton compte Discord pour accéder au suivi des candidatures.</p>
     <button class="btn discord-btn" id="loginBtn" style="width:100%;">Se connecter avec Discord</button>
-    <div id="loginErr" class="err-msg">Accès refusé : votre compte Discord n'est pas autorisé.</div>
+    <div id="loginErr" class="err-msg">Oups, ton compte Discord n'a pas les accès requis.</div>
   </div>
 </div>
 
 <!-- Espace principal -->
 <div id="mainScreen" class="w" style="display:none;">
-  <h1>Retours des candidatures</h1>
+  <h1>Suivi des candidatures</h1>
 
   <!-- Zone d'administration (Owner uniquement) -->
   <div id="adminPanel" class="pass-manager" style="display:none;">
-    <h3 style="margin-bottom:12px;">Gestion des accès Staff</h3>
+    <h3 style="margin-bottom:12px;font-size:18px;">Gestion des accès de l'équipe</h3>
     <form onsubmit="addAuthorizedUser(event)" class="pass-grid">
       <div class="form-group" style="margin:0;">
-        <label style="display:block;font-weight:700;margin-bottom:6px;font-size:14px;color:var(--mute);">ID Discord</label>
-        <input type="text" id="newDiscordId" class="input-text" placeholder="ex: 123456789012345678" style="width:100%;padding:12px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;" required>
+        <label style="display:block;font-weight:700;margin-bottom:6px;font-size:13px;color:var(--mute);">ID Discord</label>
+        <input type="text" id="newDiscordId" class="input-text" placeholder="ex: 123456789012345678" style="width:100%;padding:10px 12px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;font-size:14px;" required>
       </div>
       <div class="form-group" style="margin:0;">
-        <label style="display:block;font-weight:700;margin-bottom:6px;font-size:14px;color:var(--mute);">Pseudo Discord</label>
-        <input type="text" id="newDiscordPseudo" class="input-text" placeholder="ex: NomUtilisateur" style="width:100%;padding:12px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;" required>
+        <label style="display:block;font-weight:700;margin-bottom:6px;font-size:13px;color:var(--mute);">Pseudo Discord</label>
+        <input type="text" id="newDiscordPseudo" class="input-text" placeholder="ex: Pseudo" style="width:100%;padding:10px 12px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;font-size:14px;" required>
       </div>
-      <button type="submit" class="btn pri" style="padding:12px 20px;">Autoriser</button>
+      <button type="submit" class="btn pri" style="padding:10px 18px;">Ajouter</button>
     </form>
     <div class="pass-list" id="authList"></div>
   </div>
@@ -102,7 +102,7 @@ footer{text-align:center;margin-top:20px}
 
 <script>
 const CFG = {
-  CLIENT_ID: "1569123432254148681", // ID mis à jour depuis votre capture d'écran
+  CLIENT_ID: "1569123432254148681",
   AUTH_URL: "https://discord.com/oauth2/authorize",
   REDIR: "https://challengerobotik.github.io/Lignes-d-Azur/staff.html",
   ME_URL: "https://discord.com/api/users/@me",
@@ -146,11 +146,11 @@ async function callback() {
   
   const st = sessionStorage.getItem("st_staff");
   history.replaceState({}, "", location.pathname);
-  if(err) throw new Error(err === "access_denied" ? "autorisation refusée" : err);
-  if(!st || h.get("state") !== st) throw new Error("état invalide");
+  if(err) throw new Error(err === "access_denied" ? "accès refusé" : err);
+  if(!st || h.get("state") !== st) throw new Error("session invalide");
   
   const r = await fetch(CFG.ME_URL, { headers: { Authorization: "Bearer " + tok } });
-  if(!r.ok) throw new Error("profil Discord inaccessible (HTTP " + r.status + ")");
+  if(!r.ok) throw new Error("impossible de récupérer ton profil Discord");
   const u = await r.json();
   if(!u.id || !u.username) throw new Error("profil incomplet");
   
@@ -164,11 +164,6 @@ async function initApp() {
     const visited = await res.json();
     if(!visited) {
       await fetch(`${CFG.DB}/siteadmin_visited.json`, { method: "PUT", body: JSON.stringify(true) });
-      await fetch(`${CFG.DB}/authorized_users/${OWNER_ID}.json`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ discordPseudo: "Owner Principal", addedAt: Date.now() })
-      });
     }
   } catch(e) {}
 
@@ -179,8 +174,8 @@ async function initApp() {
       return;
     }
   } catch(e) {
-    console.error("Erreur OAuth2:", e);
-    $("#loginErr").textContent = "La connexion Discord a échoué (" + (e && e.message || e) + ").";
+    console.error("OAuth2:", e);
+    $("#loginErr").textContent = "Connexion impossible (" + (e && e.message || e) + ").";
     $("#loginErr").style.display = "block";
   }
 
@@ -201,7 +196,8 @@ async function verifyAccess(discordId, discordName) {
     authorizedUsers = (await res.json()) || {};
 
     if(discordId === OWNER_ID || authorizedUsers[discordId]) {
-      const pseudo = discordId === OWNER_ID ? "Owner Principal" : (authorizedUsers[discordId].discordPseudo || discordName);
+      // On utilise ton vrai pseudo Discord récupéré, fini les dénominations automatiques
+      const pseudo = discordId === OWNER_ID ? discordName : (authorizedUsers[discordId].discordPseudo || discordName);
       showApp(discordId, pseudo);
     } else {
       $("#loginScreen").style.display = "block";
@@ -209,7 +205,7 @@ async function verifyAccess(discordId, discordName) {
       localStorage.removeItem("staff_user");
     }
   } catch(e) {
-    alert("Erreur de connexion à la base de données.");
+    alert("Petit souci de connexion avec la base de données.");
   }
 }
 
@@ -217,7 +213,9 @@ function showApp(currentId, currentPseudo) {
   $("#loginScreen").style.display = "none";
   $("#mainScreen").style.display = "block";
   $("#userInfo").style.display = "flex";
-  $("#loggedName").textContent = currentPseudo;
+  
+  // Affichage propre du pseudo dans l'en-tête
+  $("#loggedName").textContent = currentId === OWNER_ID ? `${currentPseudo} (Propriétaire)` : currentPseudo;
 
   if(currentId === OWNER_ID) {
     $("#adminPanel").style.display = "block";
@@ -228,7 +226,7 @@ function showApp(currentId, currentPseudo) {
   load();
 }
 
-// --- GESTION DES AUTORISATIONS (OWNER) ---
+// --- GESTION DES AUTORISATIONS ---
 async function loadAuthorizedUsers() {
   try {
     const res = await fetch(`${CFG.DB}/authorized_users.json`);
@@ -240,13 +238,13 @@ async function loadAuthorizedUsers() {
 function drawAuthorizedUsers() {
   const entries = Object.entries(authorizedUsers);
   if(!entries.length) {
-    $("#authList").innerHTML = '<p style="color:var(--mute);font-size:13px;margin-top:8px;">Aucun membre autorisé.</p>';
+    $("#authList").innerHTML = '<p style="color:var(--mute);font-size:13px;margin-top:6px;">Aucun autre membre pour l\'instant.</p>';
     return;
   }
-  $("#authList").innerHTML = '<b>Utilisateurs autorisés :</b>' + entries.map(([id, item]) => `
+  $("#authList").innerHTML = '<b>Membres ayant accès :</b>' + entries.map(([id, item]) => `
     <div class="pass-item">
-      <span><b>${esc(item.discordPseudo)}</b> (ID: <code>${esc(id)}</code>)</span>
-      ${id !== OWNER_ID ? `<button class="btn no" style="padding:4px 10px;font-size:12px;border-radius:8px;" onclick="removeAuthorizedUser('${id}')">Retirer</button>` : '<span style="font-size:12px;color:var(--mute);font-weight:700;">Owner</span>'}
+      <span><b>${esc(item.discordPseudo)}</b> <small style="color:var(--mute);">(ID: ${esc(id)})</small></span>
+      ${id !== OWNER_ID ? `<button class="btn no" style="padding:4px 10px;font-size:12px;border-radius:8px;" onclick="removeAuthorizedUser('${id}')">Retirer</button>` : '<span style="font-size:12px;color:var(--mute);font-weight:700;">Propriétaire</span>'}
     </div>
   `).join("");
 }
@@ -266,12 +264,12 @@ async function addAuthorizedUser(e) {
     $("#newDiscordPseudo").value = "";
     loadAuthorizedUsers();
   } catch(err) {
-    alert("Échec de l'ajout de l'utilisateur.");
+    alert("Impossible d'ajouter cet utilisateur.");
   }
 }
 
 async function removeAuthorizedUser(id) {
-  if(!confirm("Retirer l'accès à cet utilisateur ?")) return;
+  if(!confirm("Tu es sûr de vouloir retirer l'accès à ce membre ?")) return;
   try {
     await fetch(`${CFG.DB}/authorized_users/${id}.json`, { method: "DELETE" });
     loadAuthorizedUsers();
@@ -282,13 +280,13 @@ async function removeAuthorizedUser(id) {
 
 // --- GESTION DES CANDIDATURES ---
 async function load() {
-  $("#list").innerHTML = '<p class="empty">Chargement…</p>';
+  $("#list").innerHTML = '<p class="empty">Chargement des candidatures...</p>';
   try {
     const d = await (await fetch(`${CFG.DB}/candidatures.json`)).json() || {};
     all = Object.entries(d).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.date - a.date);
     draw();
   } catch(e) {
-    $("#list").innerHTML = '<p class="empty">Impossible de charger les candidatures. Actualisez la page.</p>';
+    $("#list").innerHTML = '<p class="empty">Impossible de charger les candidatures pour le moment.</p>';
   }
 }
 
@@ -308,14 +306,14 @@ function draw() {
     </dl>
     ${c.status === "pending" ? `<div class="act"><button class="btn ok" data-d="accepted" data-id="${esc(c.id)}">Accepter</button><button class="btn no" data-d="refused" data-id="${esc(c.id)}">Refuser</button></div>`
     : `<span class="badge b-${c.status}">${c.status === "accepted" ? "Acceptée" : "Refusée"} le ${new Date(c.decidedAt).toLocaleDateString("fr-FR")}</span>`}
-  </article>`).join("") : '<p class="empty">Aucune candidature ici.</p>';
+  </article>`).join("") : '<p class="empty">Aucune candidature pour le moment.</p>';
   
   document.querySelectorAll("[data-d]").forEach(b => b.onclick = () => decide(b));
 }
 
 async function decide(btn) {
   const id = btn.dataset.id, res = btn.dataset.d, c = all.find(x => x.id === id);
-  if(!confirm(`${res === "accepted" ? "Accepter" : "Refuser"} la candidature de ${c.discordPseudo} ?`)) return;
+  if(!confirm(`Veux-tu vraiment ${res === "accepted" ? "accepter" : "refuser"} la candidature de ${c.discordPseudo} ?`)) return;
   btn.parentElement.querySelectorAll("button").forEach(b => b.disabled = true);
   try {
     const r = await fetch(`${CFG.DB}/candidatures/${id}.json`, {
@@ -345,12 +343,12 @@ async function decide(btn) {
     
     load();
   } catch(e) {
-    alert("L’action a échoué. Réessayez.");
+    alert("L'action a échoué, réessaie dans un instant.");
     btn.parentElement.querySelectorAll("button").forEach(b => b.disabled = false);
   }
 }
 
-// Initialisation
+// Lancement
 $("#loginBtn").onclick = login;
 initApp();
 </script>
