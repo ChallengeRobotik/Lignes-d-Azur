@@ -68,8 +68,8 @@ footer{text-align:center;margin-top:20px}
 <div id="loginScreen" class="w">
   <div class="login-box">
     <h2>Espace Staff</h2>
-    <p style="color:var(--mute);font-size:14px;margin-bottom:24px;">Connectez-vous via votre compte Discord pour accéder aux retours de candidatures.</p>
-    <a id="discordLoginBtn" href="#" class="btn discord-btn" style="width:100%;">Se connecter avec Discord</a>
+    <p style="color:var(--mute);font-size:14px;margin-bottom:24px;">Connectez-vous avec votre compte Discord pour accéder à la gestion des candidatures.</p>
+    <button class="btn discord-btn" id="loginBtn" style="width:100%;">Se connecter avec Discord</button>
     <div id="loginErr" class="err-msg">Accès refusé : votre compte Discord n'est pas autorisé.</div>
   </div>
 </div>
@@ -78,17 +78,17 @@ footer{text-align:center;margin-top:20px}
 <div id="mainScreen" class="w" style="display:none;">
   <h1>Retours des candidatures</h1>
 
-  <!-- Zone de gestion des accès (Visible uniquement pour l'owner) -->
+  <!-- Zone d'administration (Owner uniquement) -->
   <div id="adminPanel" class="pass-manager" style="display:none;">
-    <h3 style="margin-bottom:12px;">Gestion des accès autorisés</h3>
+    <h3 style="margin-bottom:12px;">Gestion des accès Staff</h3>
     <form onsubmit="addAuthorizedUser(event)" class="pass-grid">
       <div class="form-group" style="margin:0;">
         <label style="display:block;font-weight:700;margin-bottom:6px;font-size:14px;color:var(--mute);">ID Discord</label>
-        <input type="text" id="newDiscordId" class="input-text" placeholder="ex: 123456789" style="width:100%;padding:12px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;" required>
+        <input type="text" id="newDiscordId" class="input-text" placeholder="ex: 123456789012345678" style="width:100%;padding:12px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;" required>
       </div>
       <div class="form-group" style="margin:0;">
-        <label style="display:block;font-weight:700;margin-bottom:6px;font-size:14px;color:var(--mute);">Pseudo Discord actuel</label>
-        <input type="text" id="newDiscordPseudo" class="input-text" placeholder="ex: Pseudo#0000" style="width:100%;padding:12px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;" required>
+        <label style="display:block;font-weight:700;margin-bottom:6px;font-size:14px;color:var(--mute);">Pseudo Discord</label>
+        <input type="text" id="newDiscordPseudo" class="input-text" placeholder="ex: NomUtilisateur" style="width:100%;padding:12px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;" required>
       </div>
       <button type="submit" class="btn pri" style="padding:12px 20px;">Autoriser</button>
     </form>
@@ -101,84 +101,108 @@ footer{text-align:center;margin-top:20px}
 </div>
 
 <script>
-const DB="https://lignesd-azur-default-rtdb.europe-west1.firebasedatabase.app";
-const HOOK="https://discord.com/api/webhooks/1569042252028977294/mZ1OU6GyQE9PqKnNq2O3mkjhYghvcmsxDHjm6x388mAjmsfBUNkr-Vn64NIDps3ElhQ2";
-const OWNER_ID="800002654532534292";
+const CFG = {
+  CLIENT_ID: "1569106338749878284",
+  AUTH_URL: "https://discord.com/oauth2/authorize",
+  REDIR: "https://challengerobotik.github.io/Lignes-d-Azur/staff.html",
+  ME_URL: "https://discord.com/api/users/@me",
+  DB: "https://lignesd-azur-default-rtdb.europe-west1.firebasedatabase.app",
+  HOOK: "https://discord.com/api/webhooks/1569042252028977294/mZ1OU6GyQE9PqKnNq2O3mkjhYghvcmsxDHjm6x388mAjmsfBUNkr-Vn64NIDps3ElhQ2"
+};
+const OWNER_ID = "800002654532534292";
 
-// CONFIGURATION OAUTH2 DISCORD
-const CLIENT_ID="VOTRE_CLIENT_ID"; // Remplacez par votre Client ID Discord Developer Portal
-const REDIRECT_URI = window.location.origin + window.location.pathname;
-$("#discordLoginBtn").href = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s??"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const TABS = [["pending","En attente"],["accepted","Acceptées"],["refused","Refusées"]];
 
-const $=s=>document.querySelector(s);
-const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const TABS=[["pending","En attente"],["accepted","Acceptées"],["refused","Refusées"]];
-let all=[],tab="pending",authorizedUsers={};
+let all = [], tab = "pending", authorizedUsers = {};
 
-// Vérification initiale Firebase & OAuth2 au chargement de la page
+const b64 = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+
+function login() {
+  const st = b64(crypto.getRandomValues(new Uint8Array(16)));
+  sessionStorage.setItem("st_staff", st);
+  location.href = CFG.AUTH_URL + "?" + new URLSearchParams({
+    client_id: CFG.CLIENT_ID,
+    redirect_uri: CFG.REDIR,
+    response_type: "token",
+    scope: "identify",
+    state: st
+  });
+}
+
+function logout() {
+  localStorage.removeItem("staff_user");
+  sessionStorage.removeItem("st_staff");
+  location.reload();
+}
+
 async function initApp() {
+  // 1. Initialisation de la BDD lors de la première visite
   try {
-    const res = await fetch(`${DB}/siteadmin_visited.json`);
+    const res = await fetch(`${CFG.DB}/siteadmin_visited.json`);
     const visited = await res.json();
     if(!visited) {
-      await fetch(`${DB}/siteadmin_visited.json`, {method:"PUT", body:JSON.stringify(true)});
-      await fetch(`${DB}/authorized_users/${OWNER_ID}.json`, {
-        method:"PUT",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({discordPseudo: "Owner Principal", addedAt: Date.now()})
+      await fetch(`${CFG.DB}/siteadmin_visited.json`, { method: "PUT", body: JSON.stringify(true) });
+      await fetch(`${CFG.DB}/authorized_users/${OWNER_ID}.json`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discordPseudo: "Owner Principal", addedAt: Date.now() })
       });
     }
   } catch(e) {}
 
-  // Récupérer le token d'accès dans l'URL (fragment hash renvoyé par Discord OAuth2)
-  const fragment = new URLSearchParams(window.location.hash.substring(1));
-  const accessToken = fragment.get("access_token");
+  // 2. Traitement du retour OAuth2 Discord
+  const h = new URLSearchParams(location.hash.slice(1));
+  const q = new URLSearchParams(location.search);
+  const tok = h.get("access_token");
+  const err = q.get("error") || h.get("error");
 
-  if(accessToken) {
-    window.location.hash = ""; // Nettoyer l'URL
-    try {
-      const userRes = await fetch("https://discord.com/api/users/@me", {
-        headers: { authorization: `Bearer ${accessToken}` }
-      });
-      const userData = await userRes.json();
-      if(userData.id) {
-        checkAndLoginUser(userData.id, userData.username);
-        return;
-      }
-    } catch(e) {}
+  if(tok) {
+    const st = sessionStorage.getItem("st_staff");
+    history.replaceState({}, "", location.pathname);
+    if(st && h.get("state") === st) {
+      try {
+        const r = await fetch(CFG.ME_URL, { headers: { Authorization: "Bearer " + tok } });
+        if(r.ok) {
+          const u = await r.json();
+          if(u.id) {
+            await verifyAccess(String(u.id), u.username);
+            return;
+          }
+        }
+      } catch(e) {}
+    }
   }
 
-  // Vérifier si déjà connecté via sessionStorage
-  if(sessionStorage.getItem("staff_logged") === "1") {
-    showApp(sessionStorage.getItem("staff_id"), sessionStorage.getItem("staff_user"));
+  // 3. Vérification de la session enregistrée
+  let storedUser = null;
+  try { storedUser = JSON.parse(localStorage.getItem("staff_user")); } catch(e){}
+
+  if(storedUser && storedUser.id) {
+    await verifyAccess(storedUser.id, storedUser.name);
   }
 }
 
-async function checkAndLoginUser(discordId, discordUsername) {
+async function verifyAccess(discordId, discordName) {
   try {
-    const res = await fetch(`${DB}/authorized_users.json`);
-    authorizedUsers = await res.json() || {};
+    const res = await fetch(`${CFG.DB}/authorized_users.json`);
+    authorizedUsers = (await res.json()) || {};
 
     if(discordId === OWNER_ID || authorizedUsers[discordId]) {
-      const pseudo = discordId === OWNER_ID ? "Owner Principal" : (authorizedUsers[discordId].discordPseudo || discordUsername);
-      sessionStorage.setItem("staff_logged", "1");
-      sessionStorage.setItem("staff_id", discordId);
-      sessionStorage.setItem("staff_user", pseudo);
+      const pseudo = discordId === OWNER_ID ? "Owner Principal" : (authorizedUsers[discordId].discordPseudo || discordName);
+      localStorage.setItem("staff_user", JSON.stringify({ id: discordId, name: pseudo }));
       showApp(discordId, pseudo);
     } else {
       $("#loginErr").style.display = "block";
     }
   } catch(e) {
-    alert("Erreur lors de la vérification des accès.");
+    alert("Erreur de connexion à la base de données.");
   }
 }
 
-function logout(){
-  sessionStorage.clear();
-  window.location.href = REDIRECT_URI;
-}
-
-function showApp(currentId, currentPseudo){
+function showApp(currentId, currentPseudo) {
   $("#loginScreen").style.display = "none";
   $("#mainScreen").style.display = "block";
   $("#userInfo").style.display = "flex";
@@ -194,21 +218,21 @@ function showApp(currentId, currentPseudo){
 }
 
 // --- GESTION DES AUTORISATIONS (OWNER) ---
-async function loadAuthorizedUsers(){
-  try{
-    const res = await fetch(`${DB}/authorized_users.json`);
-    authorizedUsers = await res.json() || {};
+async function loadAuthorizedUsers() {
+  try {
+    const res = await fetch(`${CFG.DB}/authorized_users.json`);
+    authorizedUsers = (await res.json()) || {};
     drawAuthorizedUsers();
-  }catch{}
+  } catch(e) {}
 }
 
-function drawAuthorizedUsers(){
+function drawAuthorizedUsers() {
   const entries = Object.entries(authorizedUsers);
-  if(!entries.length){
+  if(!entries.length) {
     $("#authList").innerHTML = '<p style="color:var(--mute);font-size:13px;margin-top:8px;">Aucun membre autorisé.</p>';
     return;
   }
-  $("#authList").innerHTML = '<b>Utilisateurs ayant accès :</b>' + entries.map(([id, item]) => `
+  $("#authList").innerHTML = '<b>Utilisateurs autorisés :</b>' + entries.map(([id, item]) => `
     <div class="pass-item">
       <span><b>${esc(item.discordPseudo)}</b> (ID: <code>${esc(id)}</code>)</span>
       ${id !== OWNER_ID ? `<button class="btn no" style="padding:4px 10px;font-size:12px;border-radius:8px;" onclick="removeAuthorizedUser('${id}')">Retirer</button>` : '<span style="font-size:12px;color:var(--mute);font-weight:700;">Owner</span>'}
@@ -216,13 +240,13 @@ function drawAuthorizedUsers(){
   `).join("");
 }
 
-async function addAuthorizedUser(e){
+async function addAuthorizedUser(e) {
   e.preventDefault();
   const discordId = $("#newDiscordId").value.trim();
   const discordPseudo = $("#newDiscordPseudo").value.trim();
 
   try {
-    await fetch(`${DB}/authorized_users/${discordId}.json`, {
+    await fetch(`${CFG.DB}/authorized_users/${discordId}.json`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ discordPseudo, addedAt: Date.now() })
@@ -230,60 +254,93 @@ async function addAuthorizedUser(e){
     $("#newDiscordId").value = "";
     $("#newDiscordPseudo").value = "";
     loadAuthorizedUsers();
-  } catch {
-    alert("Échec lors de l'ajout de l'utilisateur.");
+  } catch(err) {
+    alert("Échec de l'ajout de l'utilisateur.");
   }
 }
 
-async function removeAuthorizedUser(id){
+async function removeAuthorizedUser(id) {
   if(!confirm("Retirer l'accès à cet utilisateur ?")) return;
   try {
-    await fetch(`${DB}/authorized_users/${id}.json`, { method: "DELETE" });
+    await fetch(`${CFG.DB}/authorized_users/${id}.json`, { method: "DELETE" });
     loadAuthorizedUsers();
-  } catch {
+  } catch(err) {
     alert("Impossible de supprimer cet accès.");
   }
 }
 
-// --- CHARGEMENT CANDIDATURES ---
-async function load(){
-  $("#list").innerHTML='<p class="empty">Chargement…</p>';
-  try{
-    const d=await(await fetch(DB+"/candidatures.json")).json()||{};
-    all=Object.entries(d).map(([id,v])=>({id,...v})).sort((a,b)=>b.date-a.date);
+// --- GESTION DES CANDIDATURES ---
+async function load() {
+  $("#list").innerHTML = '<p class="empty">Chargement…</p>';
+  try {
+    const d = await (await fetch(`${CFG.DB}/candidatures.json`)).json() || {};
+    all = Object.entries(d).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.date - a.date);
     draw();
-  }catch{$("#list").innerHTML='<p class="empty">Impossible de charger les candidatures. Actualisez la page.</p>'}
+  } catch(e) {
+    $("#list").innerHTML = '<p class="empty">Impossible de charger les candidatures. Actualisez la page.</p>';
+  }
 }
 
-function draw(){
-  $("#tabs").innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?"on":""}" data-t="${k}">${l} (${all.filter(c=>c.status===k).length})</button>`).join("");
-  document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
-  const l=all.filter(c=>c.status===tab);
-  $("#list").innerHTML=l.length?l.map(c=>`<article class="c">
+function draw() {
+  $("#tabs").innerHTML = TABS.map(([k, l]) => `<button class="${k===tab?"on":""}" data-t="${k}">${l} (${all.filter(c => c.status === k).length})</button>`).join("");
+  document.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { tab = b.dataset.t; draw(); });
+  
+  const l = all.filter(c => c.status === tab);
+  $("#list").innerHTML = l.length ? l.map(c => `<article class="c">
     <div class="top"><b>${esc(c.discordPseudo)}</b><small>${new Date(c.date).toLocaleString("fr-FR")}</small></div>
-    <dl><dt>ID Discord</dt><dd>${esc(c.discordId)}</dd><dt>Pseudo Roblox</dt><dd>${esc(c.robloxPseudo)}</dd>
-    <dt>Disponibilité</dt><dd>${esc(c.dispo)}/10</dd><dt>Débit</dt><dd>${esc(c.speed)} Mbit/s</dd>
-    <dt>Pourquoi lui</dt><dd>${esc(c.why)}</dd><dt>Motivation</dt><dd>${esc(c.motivation)}</dd></dl>
-    ${c.status==="pending"?`<div class="act"><button class="btn ok" data-d="accepted" data-id="${esc(c.id)}">Accepter</button><button class="btn no" data-d="refused" data-id="${esc(c.id)}">Refuser</button></div>`
-    :`<span class="badge b-${c.status}">${c.status==="accepted"?"Acceptée":"Refusée"} le ${new Date(c.decidedAt).toLocaleDateString("fr-FR")}</span>`}
-  </article>`).join(""):'<p class="empty">Aucune candidature ici.</p>';
-  document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>decide(b));
+    <dl>
+      <dt>ID Discord</dt><dd>${esc(c.discordId)}</dd>
+      <dt>Pourquoi lui</dt><dd>${esc(c.why)}</dd>
+      <dt>Disponibilité</dt><dd>${esc(c.dispo)}/10</dd>
+      <dt>Motivation</dt><dd>${esc(c.motivation)}</dd>
+      <dt>Débit</dt><dd>${esc(c.speed)} Mbit/s</dd>
+    </dl>
+    ${c.status === "pending" ? `<div class="act"><button class="btn ok" data-d="accepted" data-id="${esc(c.id)}">Accepter</button><button class="btn no" data-d="refused" data-id="${esc(c.id)}">Refuser</button></div>`
+    : `<span class="badge b-${c.status}">${c.status === "accepted" ? "Acceptée" : "Refusée"} le ${new Date(c.decidedAt).toLocaleDateString("fr-FR")}</span>`}
+  </article>`).join("") : '<p class="empty">Aucune candidature ici.</p>';
+  
+  document.querySelectorAll("[data-d]").forEach(b => b.onclick = () => decide(b));
 }
 
-async function decide(btn){
-  const id=btn.dataset.id,res=btn.dataset.d,c=all.find(x=>x.id===id);
-  if(!confirm(`${res==="accepted"?"Accepter":"Refuser"} la candidature de ${c.discordPseudo} ?`))return;
-  btn.parentElement.querySelectorAll("button").forEach(b=>b.disabled=true);
-  try{
-    const r=await fetch(`${DB}/candidatures/${id}.json`,{method:"PATCH",body:JSON.stringify({status:res,decidedAt:Date.now()})});if(!r.ok)throw 0;
-    const ok=res==="accepted";
-    await fetch(HOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({embeds:[{title:"Résultat de candidature",color:ok?0x1E9C3F:0xD6341F,timestamp:new Date().toISOString(),fields:[
-      {name:"Pseudo",value:c.discordPseudo,inline:true},{name:"ID",value:String(c.discordId),inline:true},{name:"Résultat",value:ok?"✅ Accepté":"❌ Refusé"}]}]})}).catch(()=>{});
+async function decide(btn) {
+  const id = btn.dataset.id, res = btn.dataset.d, c = all.find(x => x.id === id);
+  if(!confirm(`${res === "accepted" ? "Accepter" : "Refuser"} la candidature de ${c.discordPseudo} ?`)) return;
+  btn.parentElement.querySelectorAll("button").forEach(b => b.disabled = true);
+  try {
+    const r = await fetch(`${CFG.DB}/candidatures/${id}.json`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: res, decidedAt: Date.now() })
+    });
+    if(!r.ok) throw 0;
+    
+    const ok = res === "accepted";
+    await fetch(CFG.HOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        embeds: [{
+          title: "Résultat de candidature",
+          color: ok ? 0x1E9C3F : 0xD6341F,
+          timestamp: new Date().toISOString(),
+          fields: [
+            { name: "Pseudo", value: c.discordPseudo, inline: true },
+            { name: "ID", value: String(c.discordId), inline: true },
+            { name: "Résultat", value: ok ? "✅ Accepté" : "❌ Refusé" }
+          ]
+        }]
+      })
+    }).catch(() => {});
+    
     load();
-  }catch{alert("L’action a échoué. Réessayez.");btn.parentElement.querySelectorAll("button").forEach(b=>b.disabled=false)}
+  } catch(e) {
+    alert("L’action a échoué. Réessayez.");
+    btn.parentElement.querySelectorAll("button").forEach(b => b.disabled = false);
+  }
 }
 
-// Lancement au chargement
+// Initialisation
+$("#loginBtn").onclick = login;
 initApp();
 </script>
 </body>
