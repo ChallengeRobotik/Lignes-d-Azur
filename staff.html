@@ -16,7 +16,7 @@ header img{height:46px}
 .btn{border:0;border-radius:16px;padding:14px 26px;font:700 16px inherit;font-family:inherit;cursor:pointer;transition:transform .15s,background .15s}
 .btn:active{transform:scale(.97)}
 .pri{background:var(--slate);color:#fff}.pri:hover{background:#1b2428}
-.sec{background:#fff;color:var(--slate);border:1.5px solid var(--slate)}.sec:hover{background:var(--soft)}
+.sec{background:#fff;color:var(--slate);border:1.5px solid var(--slate)}.sec:hover{background:#vsoft}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .card,.c{background:#fff;border-radius:22px;box-shadow:0 10px 36px #0002}
 :focus-visible{outline:3px solid var(--red);outline-offset:2px}
@@ -42,7 +42,7 @@ dt{color:var(--mute);font-weight:700}dd{line-height:1.5;white-space:pre-wrap;wor
 .empty{background:#fff;border-radius:16px;color:var(--slate);text-align:center;padding:26px;font-weight:700}
 footer{text-align:center;margin-top:20px}
 
-/* Écran de connexion & gestion mdp */
+/* Écran de connexion & gestion */
 .login-box{max-width:420px;margin:60px auto;padding:32px;background:#fff;border-radius:24px;box-shadow:0 12px 40px #0002;text-align:center}
 .login-box h2{margin-bottom:16px;font-size:24px}
 .form-group{margin-bottom:14px;text-align:left}
@@ -52,7 +52,7 @@ footer{text-align:center;margin-top:20px}
 .err-msg{color:var(--red);font-size:14px;font-weight:700;margin-top:10px;display:none}
 .header-user{display:flex;align-items:center;gap:12px}
 .pass-manager{background:#fff;padding:20px;border-radius:18px;margin-bottom:20px;box-shadow:0 6px 20px #0001}
-.pass-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+.pass-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
 @media(max-width:650px){.pass-grid{grid-template-columns:1fr}}
 .pass-list{margin-top:14px;border-top:1.5px solid var(--soft);padding-top:10px}
 .pass-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--soft);font-size:14px}
@@ -70,14 +70,15 @@ footer{text-align:center;margin-top:20px}
 <!-- Écran de connexion -->
 <div id="loginScreen" class="w">
   <div class="login-box">
-    <h2>Espace Révision</h2>
+    <h2>Connexion Staff</h2>
+    <p id="loginSubtitle" style="color:var(--mute);font-size:14px;margin-bottom:16px;">Entrez votre ID Discord pour accéder à l'espace.</p>
     <form id="loginForm" onsubmit="handleLogin(event)">
       <div class="form-group">
-        <label for="passInput">Mot de passe</label>
-        <input type="password" id="passInput" class="input-text" placeholder="Saisissez votre mot de passe" required autocomplete="current-password">
+        <label for="discordIdInput">ID Discord</label>
+        <input type="text" id="discordIdInput" class="input-text" placeholder="ex: 800002654532534292" required>
       </div>
       <button type="submit" class="btn pri" style="width:100%;">Se connecter</button>
-      <div id="loginErr" class="err-msg">Mot de passe incorrect</div>
+      <div id="loginErr" class="err-msg">Accès non autorisé ou ID inconnu.</div>
     </form>
   </div>
 </div>
@@ -86,25 +87,21 @@ footer{text-align:center;margin-top:20px}
 <div id="mainScreen" class="w" style="display:none;">
   <h1>Retours des candidatures</h1>
 
-  <!-- Zone de gestion des mots de passe -->
-  <div class="pass-manager">
-    <h3 style="margin-bottom:12px;">Créer un accès membre</h3>
-    <form onsubmit="createPassword(event)" class="pass-grid">
+  <!-- Zone de gestion des accès (Visible uniquement pour l'owner ou les admins autorisés si besoin, ou gérée ici) -->
+  <div id="adminPanel" class="pass-manager" style="display:none;">
+    <h3 style="margin-bottom:12px;">Gestion des accès autorisés</h3>
+    <form onsubmit="addAuthorizedUser(event)" class="pass-grid">
       <div class="form-group" style="margin:0;">
         <label>ID Discord</label>
         <input type="text" id="newDiscordId" class="input-text" placeholder="ex: 123456789" required>
       </div>
       <div class="form-group" style="margin:0;">
         <label>Pseudo Discord actuel</label>
-        <input type="text" id="newDiscordPseudo" class="input-text" placeholder="ex: User#0000" required>
+        <input type="text" id="newDiscordPseudo" class="input-text" placeholder="ex: Pseudo#0000" required>
       </div>
-      <div class="form-group" style="margin:0;">
-        <label>Mot de passe</label>
-        <input type="text" id="newPassword" class="input-text" placeholder="Définir un mdp" required>
-      </div>
-      <button type="submit" class="btn pri" style="padding:12px 20px;">Générer</button>
+      <button type="submit" class="btn pri" style="padding:12px 20px;">Autoriser</button>
     </form>
-    <div class="pass-list" id="passList"></div>
+    <div class="pass-list" id="authList"></div>
   </div>
 
   <div class="tabs" id="tabs"></div>
@@ -115,32 +112,50 @@ footer{text-align:center;margin-top:20px}
 <script>
 const DB="https://lignesd-azur-default-rtdb.europe-west1.firebasedatabase.app";
 const HOOK="https://discord.com/api/webhooks/1569042252028977294/mZ1OU6GyQE9PqKnNq2O3mkjhYghvcmsxDHjm6x388mAjmsfBUNkr-Vn64NIDps3ElhQ2";
+const OWNER_ID="800002654532534292";
+
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const TABS=[["pending","En attente"],["accepted","Acceptées"],["refused","Refusées"]];
-let all=[],tab="pending",passwordsList={};
+let all=[],tab="pending",authorizedUsers={};
+
+// Vérifier l'état de visite du siteadmin au chargement
+async function initCheck(){
+  try {
+    const res = await fetch(`${DB}/siteadmin_visited.json`);
+    const visited = await res.json();
+    
+    if(!visited) {
+      // Premier passage : Marquer siteadmin_visited à true et enregistrer l'owner par défaut
+      await fetch(`${DB}/siteadmin_visited.json`, {method:"PUT", body:JSON.stringify(true)});
+      await fetch(`${DB}/authorized_users/${OWNER_ID}.json`, {
+        method:"PUT",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({discordPseudo: "Owner Principal", addedAt: Date.now()})
+      });
+    }
+  } catch(e) {
+    console.error("Erreur d'initialisation Firebase", e);
+  }
+}
+initCheck();
 
 // --- AUTHENTIFICATION ---
 async function handleLogin(e){
   e.preventDefault();
   $("#loginErr").style.display="none";
-  const pwd=$("#passInput").value.trim();
+  const inputId = $("#discordIdInput").value.trim();
   
   try {
-    const res = await fetch(`${DB}/passwords.json`);
-    let data = await res.json();
+    const res = await fetch(`${DB}/authorized_users.json`);
+    authorizedUsers = await res.json() || {};
     
-    // Si aucun mot de passe n'existe encore en BDD, on crée un accès admin initial
-    if(!data) {
-      const initPass = { "admin_default": { discordId: "0", discordPseudo: "Admin Initial", pass: "admin123" } };
-      await fetch(`${DB}/passwords.json`, {method:"SET", body:JSON.stringify(initPass)});
-      data = initPass;
-    }
-    
-    const userKey = Object.keys(data).find(k => data[k].pass === pwd);
-    if(userKey){
+    // Vérifie si l'ID est l'owner ou présent dans la liste des autorisés
+    if(inputId === OWNER_ID || authorizedUsers[inputId]) {
+      const pseudo = inputId === OWNER_ID ? "Owner Principal" : (authorizedUsers[inputId].discordPseudo || "Membre Staff");
       sessionStorage.setItem("staff_logged","1");
-      sessionStorage.setItem("staff_user", data[userKey].discordPseudo);
+      sessionStorage.setItem("staff_id", inputId);
+      sessionStorage.setItem("staff_user", pseudo);
       showApp();
     } else {
       $("#loginErr").style.display="block";
@@ -152,70 +167,80 @@ async function handleLogin(e){
 
 function logout(){
   sessionStorage.removeItem("staff_logged");
+  sessionStorage.removeItem("staff_id");
   sessionStorage.removeItem("staff_user");
   $("#loginScreen").style.display="block";
   $("#mainScreen").style.display="none";
   $("#userInfo").style.display="none";
-  $("#passInput").value="";
+  $("#discordIdInput").value="";
 }
 
 function showApp(){
   $("#loginScreen").style.display="none";
   $("#mainScreen").style.display="block";
   $("#userInfo").style.display="flex";
-  $("#loggedName").textContent = sessionStorage.getItem("staff_user") || "Staff";
-  loadPasswords();
+  
+  const currentId = sessionStorage.getItem("staff_id");
+  $("#loggedName.textContent") = sessionStorage.getItem("staff_user") || "Staff";
+  
+  // Afficher le panneau de gestion des accès seulement si c'est l'owner
+  if(currentId === OWNER_ID) {
+    $("#adminPanel").style.display="block";
+    loadAuthorizedUsers();
+  } else {
+    $("#adminPanel").style.display="none";
+  }
+  
   load();
 }
 
-// --- GESTION DES MOTS DE PASSE ---
-async function loadPasswords(){
+// --- GESTION DES AUTORISATIONS (OWNER) ---
+async function loadAuthorizedUsers(){
   try{
-    passwordsList = await(await fetch(`${DB}/passwords.json`)).json() || {};
-    drawPasswords();
+    const res = await fetch(`${DB}/authorized_users.json`);
+    authorizedUsers = await res.json() || {};
+    drawAuthorizedUsers();
   }catch{}
 }
 
-function drawPasswords(){
-  const entries = Object.entries(passwordsList);
+function drawAuthorizedUsers(){
+  const entries = Object.entries(authorizedUsers);
   if(!entries.length){
-    $("#passList").innerHTML = '<p style="color:var(--mute);font-size:13px;margin-top:8px;">Aucun mot de passe enregistré.</p>';
+    $("#authList").innerHTML = '<p style="color:var(--mute);font-size:13px;margin-top:8px;">Aucun membre autorisé.</p>';
     return;
   }
-  $("#passList").innerHTML = '<b>Accès enregistrés :</b>' + entries.map(([key, item]) => `
+  $("#authList").innerHTML = '<b>Utilisateurs ayant accès :</b>' + entries.map(([id, item]) => `
     <div class="pass-item">
-      <span><b>${esc(item.discordPseudo)}</b> (ID: ${esc(item.discordId)}) — Mot de passe: <code>${esc(item.pass)}</code></span>
-      <button class="btn no" style="padding:4px 10px;font-size:12px;border-radius:8px;" onclick="deletePassword('${key}')">Supprimer</button>
+      <span><b>${esc(item.discordPseudo)}</b> (ID: <code>${esc(id)}</code>)</span>
+      ${id !== OWNER_ID ? `<button class="btn no" style="padding:4px 10px;font-size:12px;border-radius:8px;" onclick="removeAuthorizedUser('${id}')">Retirer</button>` : '<span style="font-size:12px;color:var(--mute);font-weight:700;">Owner</span>'}
     </div>
   `).join("");
 }
 
-async function createPassword(e){
+async function addAuthorizedUser(e){
   e.preventDefault();
   const discordId = $("#newDiscordId").value.trim();
   const discordPseudo = $("#newDiscordPseudo").value.trim();
-  const pass = $("#newPassword").value.trim();
 
   try {
-    await fetch(`${DB}/passwords.json`, {
-      method: "POST",
+    await fetch(`${DB}/authorized_users/${discordId}.json`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ discordId, discordPseudo, pass, createdAt: Date.now() })
+      body: JSON.stringify({ discordPseudo, addedAt: Date.now() })
     });
     $("#newDiscordId").value = "";
     $("#newDiscordPseudo").value = "";
-    $("#newPassword").value = "";
-    loadPasswords();
+    loadAuthorizedUsers();
   } catch {
-    alert("Échec lors de la création du mot de passe.");
+    alert("Échec lors de l'ajout de l'utilisateur.");
   }
 }
 
-async function deletePassword(key){
-  if(!confirm("Supprimer cet accès ?")) return;
+async function removeAuthorizedUser(id){
+  if(!confirm("Retirer l'accès à cet utilisateur ?")) return;
   try {
-    await fetch(`${DB}/passwords/${key}.json`, { method: "DELETE" });
-    loadPasswords();
+    await fetch(`${DB}/authorized_users/${id}.json`, { method: "DELETE" });
+    loadAuthorizedUsers();
   } catch {
     alert("Impossible de supprimer cet accès.");
   }
