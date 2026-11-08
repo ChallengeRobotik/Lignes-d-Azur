@@ -13,10 +13,11 @@ body{font-family:"Figtree",system-ui,sans-serif;color:var(--ink);min-height:100v
 body::before{content:"";position:fixed;inset:0;z-index:-1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3Cpattern id='p' width='44' height='44' patternUnits='userSpaceOnUse'%3E%3Cpath d='M4 4h16l-8 14zM26 26h16l-8 14z' fill='white' fill-opacity='.7'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='1600' height='900' fill='%23E6E6E8'/%3E%3Cpath d='M900 0h270l170 900H730z' fill='%23F3F3F4'/%3E%3Cpath d='M1170 0h430v900h-260z' fill='%23E8334A'/%3E%3Cpath d='M0 640h520l-50 260H0z' fill='%23E8334A'/%3E%3Crect width='1600' height='900' fill='url(%23p)'/%3E%3C/svg%3E") center/cover}
 header{width:100%;display:flex;justify-content:space-between;align-items:center;padding:8px 24px;background:#fff;box-shadow:0 2px 10px #0002;position:sticky;top:0;z-index:5}
 header img{height:46px}
-.btn{border:0;border-radius:16px;padding:14px 26px;font:700 16px inherit;font-family:inherit;cursor:pointer;transition:transform .15s,background .15s}
+.btn{border:0;border-radius:16px;padding:14px 26px;font:700 16px inherit;font-family:inherit;cursor:pointer;transition:transform .15s,background .15s;text-decoration:none;display:inline-block;text-align:center}
 .btn:active{transform:scale(.97)}
 .pri{background:var(--slate);color:#fff}.pri:hover{background:#1b2428}
-.sec{background:#fff;color:var(--slate);border:1.5px solid var(--slate)}.sec:hover{background:#vsoft}
+.discord-btn{background:#5865F2;color:#fff}.discord-btn:hover{background:#4752C4}
+.sec{background:#fff;color:var(--slate);border:1.5px solid var(--slate)}.sec:hover{background:var(--soft)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .card,.c{background:#fff;border-radius:22px;box-shadow:0 10px 36px #0002}
 :focus-visible{outline:3px solid var(--red);outline-offset:2px}
@@ -45,11 +46,7 @@ footer{text-align:center;margin-top:20px}
 /* Écran de connexion & gestion */
 .login-box{max-width:420px;margin:60px auto;padding:32px;background:#fff;border-radius:24px;box-shadow:0 12px 40px #0002;text-align:center}
 .login-box h2{margin-bottom:16px;font-size:24px}
-.form-group{margin-bottom:14px;text-align:left}
-.form-group label{display:block;font-weight:700;margin-bottom:6px;font-size:14px;color:var(--mute)}
-.input-text{width:100%;padding:12px 16px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;font-size:15px;outline:none}
-.input-text:focus{border-color:var(--slate)}
-.err-msg{color:var(--red);font-size:14px;font-weight:700;margin-top:10px;display:none}
+.err-msg{color:var(--red);font-size:14px;font-weight:700;margin-top:14px;display:none}
 .header-user{display:flex;align-items:center;gap:12px}
 .pass-manager{background:#fff;padding:20px;border-radius:18px;margin-bottom:20px;box-shadow:0 6px 20px #0001}
 .pass-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
@@ -70,16 +67,10 @@ footer{text-align:center;margin-top:20px}
 <!-- Écran de connexion -->
 <div id="loginScreen" class="w">
   <div class="login-box">
-    <h2>Connexion Staff</h2>
-    <p id="loginSubtitle" style="color:var(--mute);font-size:14px;margin-bottom:16px;">Entrez votre ID Discord pour accéder à l'espace.</p>
-    <form id="loginForm" onsubmit="handleLogin(event)">
-      <div class="form-group">
-        <label for="discordIdInput">ID Discord</label>
-        <input type="text" id="discordIdInput" class="input-text" placeholder="ex: 800002654532534292" required>
-      </div>
-      <button type="submit" class="btn pri" style="width:100%;">Se connecter</button>
-      <div id="loginErr" class="err-msg">Accès non autorisé ou ID inconnu.</div>
-    </form>
+    <h2>Espace Staff</h2>
+    <p style="color:var(--mute);font-size:14px;margin-bottom:24px;">Connectez-vous via votre compte Discord pour accéder aux retours de candidatures.</p>
+    <a id="discordLoginBtn" href="#" class="btn discord-btn" style="width:100%;">Se connecter avec Discord</a>
+    <div id="loginErr" class="err-msg">Accès refusé : votre compte Discord n'est pas autorisé.</div>
   </div>
 </div>
 
@@ -87,17 +78,17 @@ footer{text-align:center;margin-top:20px}
 <div id="mainScreen" class="w" style="display:none;">
   <h1>Retours des candidatures</h1>
 
-  <!-- Zone de gestion des accès (Visible uniquement pour l'owner ou les admins autorisés si besoin, ou gérée ici) -->
+  <!-- Zone de gestion des accès (Visible uniquement pour l'owner) -->
   <div id="adminPanel" class="pass-manager" style="display:none;">
     <h3 style="margin-bottom:12px;">Gestion des accès autorisés</h3>
     <form onsubmit="addAuthorizedUser(event)" class="pass-grid">
       <div class="form-group" style="margin:0;">
-        <label>ID Discord</label>
-        <input type="text" id="newDiscordId" class="input-text" placeholder="ex: 123456789" required>
+        <label style="display:block;font-weight:700;margin-bottom:6px;font-size:14px;color:var(--mute);">ID Discord</label>
+        <input type="text" id="newDiscordId" class="input-text" placeholder="ex: 123456789" style="width:100%;padding:12px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;" required>
       </div>
       <div class="form-group" style="margin:0;">
-        <label>Pseudo Discord actuel</label>
-        <input type="text" id="newDiscordPseudo" class="input-text" placeholder="ex: Pseudo#0000" required>
+        <label style="display:block;font-weight:700;margin-bottom:6px;font-size:14px;color:var(--mute);">Pseudo Discord actuel</label>
+        <input type="text" id="newDiscordPseudo" class="input-text" placeholder="ex: Pseudo#0000" style="width:100%;padding:12px;border:1.5px solid #D0D4D7;border-radius:12px;font:inherit;" required>
       </div>
       <button type="submit" class="btn pri" style="padding:12px 20px;">Autoriser</button>
     </form>
@@ -114,19 +105,22 @@ const DB="https://lignesd-azur-default-rtdb.europe-west1.firebasedatabase.app";
 const HOOK="https://discord.com/api/webhooks/1569042252028977294/mZ1OU6GyQE9PqKnNq2O3mkjhYghvcmsxDHjm6x388mAjmsfBUNkr-Vn64NIDps3ElhQ2";
 const OWNER_ID="800002654532534292";
 
+// CONFIGURATION OAUTH2 DISCORD
+const CLIENT_ID="VOTRE_CLIENT_ID"; // Remplacez par votre Client ID Discord Developer Portal
+const REDIRECT_URI = window.location.origin + window.location.pathname;
+$("#discordLoginBtn").href = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
+
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const TABS=[["pending","En attente"],["accepted","Acceptées"],["refused","Refusées"]];
 let all=[],tab="pending",authorizedUsers={};
 
-// Vérifier l'état de visite du siteadmin au chargement
-async function initCheck(){
+// Vérification initiale Firebase & OAuth2 au chargement de la page
+async function initApp() {
   try {
     const res = await fetch(`${DB}/siteadmin_visited.json`);
     const visited = await res.json();
-    
     if(!visited) {
-      // Premier passage : Marquer siteadmin_visited à true et enregistrer l'owner par défaut
       await fetch(`${DB}/siteadmin_visited.json`, {method:"PUT", body:JSON.stringify(true)});
       await fetch(`${DB}/authorized_users/${OWNER_ID}.json`, {
         method:"PUT",
@@ -134,63 +128,68 @@ async function initCheck(){
         body:JSON.stringify({discordPseudo: "Owner Principal", addedAt: Date.now()})
       });
     }
-  } catch(e) {
-    console.error("Erreur d'initialisation Firebase", e);
+  } catch(e) {}
+
+  // Récupérer le token d'accès dans l'URL (fragment hash renvoyé par Discord OAuth2)
+  const fragment = new URLSearchParams(window.location.hash.substring(1));
+  const accessToken = fragment.get("access_token");
+
+  if(accessToken) {
+    window.location.hash = ""; // Nettoyer l'URL
+    try {
+      const userRes = await fetch("https://discord.com/api/users/@me", {
+        headers: { authorization: `Bearer ${accessToken}` }
+      });
+      const userData = await userRes.json();
+      if(userData.id) {
+        checkAndLoginUser(userData.id, userData.username);
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // Vérifier si déjà connecté via sessionStorage
+  if(sessionStorage.getItem("staff_logged") === "1") {
+    showApp(sessionStorage.getItem("staff_id"), sessionStorage.getItem("staff_user"));
   }
 }
-initCheck();
 
-// --- AUTHENTIFICATION ---
-async function handleLogin(e){
-  e.preventDefault();
-  $("#loginErr").style.display="none";
-  const inputId = $("#discordIdInput").value.trim();
-  
+async function checkAndLoginUser(discordId, discordUsername) {
   try {
     const res = await fetch(`${DB}/authorized_users.json`);
     authorizedUsers = await res.json() || {};
-    
-    // Vérifie si l'ID est l'owner ou présent dans la liste des autorisés
-    if(inputId === OWNER_ID || authorizedUsers[inputId]) {
-      const pseudo = inputId === OWNER_ID ? "Owner Principal" : (authorizedUsers[inputId].discordPseudo || "Membre Staff");
-      sessionStorage.setItem("staff_logged","1");
-      sessionStorage.setItem("staff_id", inputId);
+
+    if(discordId === OWNER_ID || authorizedUsers[discordId]) {
+      const pseudo = discordId === OWNER_ID ? "Owner Principal" : (authorizedUsers[discordId].discordPseudo || discordUsername);
+      sessionStorage.setItem("staff_logged", "1");
+      sessionStorage.setItem("staff_id", discordId);
       sessionStorage.setItem("staff_user", pseudo);
-      showApp();
+      showApp(discordId, pseudo);
     } else {
-      $("#loginErr").style.display="block";
+      $("#loginErr").style.display = "block";
     }
-  } catch(err) {
-    alert("Erreur de connexion avec le serveur.");
+  } catch(e) {
+    alert("Erreur lors de la vérification des accès.");
   }
 }
 
 function logout(){
-  sessionStorage.removeItem("staff_logged");
-  sessionStorage.removeItem("staff_id");
-  sessionStorage.removeItem("staff_user");
-  $("#loginScreen").style.display="block";
-  $("#mainScreen").style.display="none";
-  $("#userInfo").style.display="none";
-  $("#discordIdInput").value="";
+  sessionStorage.clear();
+  window.location.href = REDIRECT_URI;
 }
 
-function showApp(){
-  $("#loginScreen").style.display="none";
-  $("#mainScreen").style.display="block";
-  $("#userInfo").style.display="flex";
-  
-  const currentId = sessionStorage.getItem("staff_id");
-  $("#loggedName.textContent") = sessionStorage.getItem("staff_user") || "Staff";
-  
-  // Afficher le panneau de gestion des accès seulement si c'est l'owner
+function showApp(currentId, currentPseudo){
+  $("#loginScreen").style.display = "none";
+  $("#mainScreen").style.display = "block";
+  $("#userInfo").style.display = "flex";
+  $("#loggedName").textContent = currentPseudo;
+
   if(currentId === OWNER_ID) {
-    $("#adminPanel").style.display="block";
+    $("#adminPanel").style.display = "block";
     loadAuthorizedUsers();
   } else {
-    $("#adminPanel").style.display="none";
+    $("#adminPanel").style.display = "none";
   }
-  
   load();
 }
 
@@ -284,10 +283,8 @@ async function decide(btn){
   }catch{alert("L’action a échoué. Réessayez.");btn.parentElement.querySelectorAll("button").forEach(b=>b.disabled=false)}
 }
 
-// Maintien de la session active au rafraîchissement
-if(sessionStorage.getItem("staff_logged")==="1"){
-  showApp();
-}
+// Lancement au chargement
+initApp();
 </script>
 </body>
 </html>
