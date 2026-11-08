@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculateur de Timestamp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #111214; --card: #1e1f22; --input: #2b2d31; --primary: #5865f2; --text: #f2f3f5; --mute: #949ba4; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Figtree', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.card { background: var(--card); border-radius: 16px; width: 100%; max-width: 540px; padding: 28px; box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+h1 { font-size: 22px; margin-bottom: 20px; color: #fff; text-align: center; }
+.form-group { margin-bottom: 20px; }
+label { display: block; font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--mute); margin-bottom: 8px; letter-spacing: 0.5px; }
+input[type="datetime-local"] { width: 100%; padding: 14px 16px; border-radius: 8px; border: 1px solid transparent; background: var(--input); color: #fff; font-family: inherit; font-size: 16px; outline: 0; transition: border-color .2s; }
+input[type="datetime-local"]:focus { border-color: var(--primary); }
+.results { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+.res-box { background: var(--input); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+.res-box span { font-size: 12px; font-weight: 700; color: var(--mute); text-transform: uppercase; }
+.res-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #2ecc71; user-select: all; }
+.btn-copy { background: var(--primary); border: 0; color: #fff; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px; transition: opacity .2s; }
+.btn-copy:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Calculateur de Timestamp</h1>
+  <div class="form-group">
+    <label for="picker">Sélectionner la date et l'heure</label>
+    <input type="datetime-local" id="picker" value="2026-12-25T17:01">
+  </div>
+
+  <div class="results">
+    <div class="res-box">
+      <div>
+        <span>Firebase / JS (ms)</span>
+        <div class="res-val" id="msVal">-</div>
+      </div>
+      <button class="btn-copy" onclick="copy('msVal')">Copier</button>
+    </div>
+
+    <div class="res-box">
+      <div>
+        <span>ISO 8601 (Webhook)</span>
+        <div class="res-val" id="isoVal">-</div>
+      </div>
+      <button class="btn-copy" onclick="copy('isoVal')">Copier</button>
+    </div>
+
+    <div class="res-box">
+      <div>
+        <span>Discord Tag</span>
+        <div class="res-val" id="discordVal">-</div>
+      </div>
+      <button class="btn-copy" onclick="copy('discordVal')">Copier</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const picker = document.getElementById('picker');
+function update() {
+  const dt = new Date(picker.value);
+  if (isNaN(dt)) return;
+  const ms = dt.getTime();
+  const sec = Math.floor(ms / 1000);
+  
+  document.getElementById('msVal').textContent = ms;
+  document.getElementById('isoVal').textContent = dt.toISOString();
+  document.getElementById('discordVal').textContent = `<t:${sec}:F>`;
+}
+
+function copy(id) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text);
+}
+
+picker.addEventListener('input', update);
+update();
+</script>
+
+</body>
+</html>
