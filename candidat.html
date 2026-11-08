@@ -61,7 +61,7 @@ input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #E8334A3
 .lock{font-size:48px;line-height:1;display:block;margin-bottom:6px;animation:wob 3s ease-in-out infinite}
 @keyframes wob{0%,90%,100%{transform:rotate(0)}93%{transform:rotate(-10deg)}96%{transform:rotate(10deg)}}
 
-.line{position:relative;height:6px;background:#E1E3E5;border-radius:9px;margin:4px 6px 32px}
+.line{position:relative;height:6px;background:#E1E3E5;border-radius:99px;margin:4px 6px 32px}
 .line i{position:absolute;left:0;top:0;height:100%;border-radius:9px;background:var(--red);transition:width .5s cubic-bezier(.2,.8,.2,1)}
 .line u{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;border:3px solid #C9CDD0;transition:border-color .4s}
 .line u.on{border-color:var(--red)}
@@ -69,6 +69,12 @@ input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #E8334A3
 .scale button{aspect-ratio:1;border:1.5px solid var(--slate);background:#fff;border-radius:50%;font:700 17px inherit;font-family:inherit;cursor:pointer;color:var(--slate)}
 .scale button.on{background:var(--red);border-color:var(--red);color:#fff}
 .speed{font-size:56px;font-weight:800;color:var(--red);margin:6px 0}
+
+/* Styling des engagements (Checkboxes) */
+.chk-group{display:flex;flex-direction:column;gap:12px;margin:20px 0 10px}
+.chk-lbl{display:flex;align-items:flex-start;gap:12px;cursor:pointer;font-weight:600;font-size:15px;line-height:1.4;color:var(--ink)}
+.chk-lbl input[type="checkbox"]{width:20px;height:20px;margin-top:2px;accent-color:var(--red);cursor:pointer;flex-shrink:0;border-radius:6px}
+
 #stage.outL{animation:oL .22s forwards}#stage.outR{animation:oR .22s forwards}
 #stage.inR{animation:iR .42s cubic-bezier(.2,.8,.2,1)}#stage.inL{animation:iL .42s cubic-bezier(.2,.8,.2,1)}
 @keyframes oL{to{opacity:0;transform:translateX(-70px)}}@keyframes oR{to{opacity:0;transform:translateX(70px)}}
@@ -108,12 +114,26 @@ footer{padding:0 0 24px}
   </div>
 
   <div class="card" id="evo" hidden>
-    <h2>Demande d’évolution</h2>
-    <p class="h">Expliquez l’évolution que vous souhaitez sur le tramway.</p>
+    <h2>Demande d’évolution vers le tramway</h2>
+    <p class="h">Pour postuler à une promotion sur le tramway, vous devez justifier de 2 semaines d’ancienneté au sein de l’entreprise.</p>
+    
     <p style="font-weight:600;margin-bottom:8px">Évolution souhaitée</p>
-    <textarea id="e1"></textarea>
+    <textarea id="e1" placeholder="Précisez la ligne ou le poste visé sur le tramway..."></textarea>
+    
     <p style="font-weight:600;margin:16px 0 8px">Pourquoi maintenant ?</p>
-    <textarea id="e2"></textarea>
+    <textarea id="e2" placeholder="Détaillez vos motivations et vos retours d'expérience depuis votre arrivée..."></textarea>
+    
+    <div class="chk-group">
+      <label class="chk-lbl">
+        <input type="checkbox" id="chkHier">
+        <span>Je m’engage formellement à respecter la hiérarchie et les consignes de l’entreprise.</span>
+      </label>
+      <label class="chk-lbl">
+        <input type="checkbox" id="chkCours">
+        <span>Je m’engage à suivre assidûment les cours de formation pour la conduite du tramway, sous peine de renvoi.</span>
+      </label>
+    </div>
+
     <p class="err" id="eErr"></p>
     <div class="row"><button class="btn sec" data-home>Retour</button><button class="btn pri" id="eSend">Envoyer ma demande</button></div>
   </div>
@@ -172,9 +192,9 @@ const cut=s=>String(s).slice(0,1000);
 
 /* ---------- Accueil ---------- */
 function evoState(){
-  if(!cand||cand.status!=="accepted")return{ok:false,t:"Disponible une fois votre candidature acceptée."};
+  if(!cand||cand.status!=="accepted")return{ok:false,t:"Disponible après 2 semaines dans l'entreprise (une fois votre candidature acceptée)."};
   const left=Math.ceil((cand.decidedAt+14*DAY-Date.now())/DAY);
-  return left>0?{ok:false,t:`Débloqué après 2 semaines de formation : encore ${left} jour${left>1?"s":""}.`}:{ok:true,t:"Demandez une évolution sur le tramway."};
+  return left>0?{ok:false,t:`Débloqué après 2 semaines de présence dans l’entreprise : encore ${left} jour${left>1?"s":""}.`}:{ok:true,t:"Postulez pour évoluer vers la conduite du tramway."};
 }
 async function home(){
   show("home");$("#hname").textContent=user.name;cand=null;
@@ -246,20 +266,54 @@ async function send(){
 }
 function openForm(){
   if(cand){show("msg");const s=cand.status;$("#mT").textContent=s==="accepted"?"Candidature acceptée":s==="refused"?"Candidature refusée":"Candidature en attente";
-    $("#mP").textContent=s==="pending"?"Vous avez déjà candidaté. Le staff n’a pas encore rendu sa réponse.":s==="accepted"?"Bienvenue en formation ! L’évolution se débloque après 2 semaines.":"Votre candidature n’a pas été retenue cette fois.";return}
+    $("#mP").textContent=s==="pending"?"Vous avez déjà candidaté. Le staff n’a pas encore rendu sa réponse.":s==="accepted"?"Bienvenue en formation ! L’évolution se débloque après 2 semaines dans l’entreprise.":"Votre candidature n’a pas été retenue cette fois.";return}
   A={};i=0;show("form");draw();
 }
 
 /* ---------- Évolution ---------- */
-function openEvo(){const e=evoState();if(!e.ok){alert(e.t);return}$("#e1").value=$("#e2").value="";$("#eErr").textContent="";show("evo")}
+function openEvo(){
+  const e=evoState();
+  if(!e.ok){alert(e.t);return}
+  $("#e1").value=$("#e2").value="";
+  $("#chkHier").checked=$("#chkCours").checked=false;
+  $("#eErr").textContent="";
+  show("evo");
+}
 async function sendEvo(){
-  const a=$("#e1").value.trim(),b=$("#e2").value.trim();if(!a||!b)return $("#eErr").textContent="Remplissez les deux champs.";
+  const a=$("#e1").value.trim(),b=$("#e2").value.trim();
+  const c1=$("#chkHier").checked,c2=$("#chkCours").checked;
+  
+  if(!a||!b)return $("#eErr").textContent="Remplissez les deux champs de texte.";
+  if(!c1||!c2)return $("#eErr").textContent="Vous devez cocher les deux cases d'engagement pour continuer.";
+
   const btn=$("#eSend");btn.disabled=true;
   try{
-    const r=await fetch(`${CFG.DB}/evolutions/${user.id}.json`,{method:"POST",body:JSON.stringify({discordPseudo:user.name,discordId:user.id,evolution:a,why:b,date:Date.now()})});if(!r.ok)throw 0;
-    hook({title:"Demande d’évolution · Tramway",fields:[{name:"Pseudo Discord",value:user.name,inline:true},{name:"Évolution",value:cut(a)},{name:"Raison",value:cut(b)}]});
-    show("msg");$("#mT").textContent="Demande envoyée";$("#mP").textContent="Le staff étudiera votre demande.";
-  }catch{$("#eErr").textContent="L’envoi a échoué. Réessayez."}
+    const r=await fetch(`${CFG.DB}/evolutions/${user.id}.json`,{method:"POST",body:JSON.stringify({
+      discordPseudo:user.name,
+      discordId:user.id,
+      evolution:a,
+      why:b,
+      commitments:{respectHierarchy:c1,followCourses:c2},
+      date:Date.now()
+    })});
+    if(!r.ok)throw 0;
+    
+    hook({
+      title:"Demande d’évolution · Tramway",
+      fields:[
+        {name:"Pseudo Discord",value:user.name,inline:true},
+        {name:"Évolution",value:cut(a)},
+        {name:"Raison",value:cut(b)},
+        {name:"Engagements",value:"✅ Respect de la hiérarchie\n✅ Suivi des cours (risque de renvoi acceptés)"}
+      ]
+    });
+    
+    show("msg");
+    $("#mT").textContent="Demande d’évolution envoyée";
+    $("#mP").textContent="Votre demande a été transmise au staff pour analyse.";
+  }catch{
+    $("#eErr").textContent="L’envoi a échoué. Réessayez.";
+  }
   btn.disabled=false;
 }
 
